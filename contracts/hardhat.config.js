@@ -22,7 +22,7 @@ module.exports = {
         settings: SOLC_SETTINGS,
       },
       {
-        version: "0.8.20",
+        version: "0.8.10",
         settings: SOLC_SETTINGS,
       },
     ],

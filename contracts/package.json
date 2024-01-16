@@ -61,5 +61,8 @@
     "semi": false,
     "singleQuote": false,
     "printWidth": 120
+  },
+  "dependencies": {
+    "@aave/lens-protocol": "^1.0.2"
   }
 }
