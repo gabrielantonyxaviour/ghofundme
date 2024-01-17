@@ -24,38 +24,37 @@ const page: NextPage = () => {
         </div>
       </div>
       <div className="absolute top-[230px] left-[110px] w-[763px] h-[612px] font-sans">
-        <div className="absolute top-[0px] left-[0px] rounded-lg bg-[#599E40] opacity-25 w-[763px] h-[612px]" />
+        <div className="absolute top-[0px] left-[0px] rounded-xl bg-[#599E40] opacity-25 w-[763px] h-[612px]" />
         <img
-          className="absolute top-[37px] left-[85px] w-[151px] h-[159.9px] overflow-hidden"
+          className="absolute top-[37px] left-[205px] w-[151px] h-[159.9px] overflow-hidden"
           alt=""
           src="/metamask-1.svg"
         />
         <img
-          className="absolute h-[29.51%] w-[32.22%] top-[13.59%] right-[13.61%] bottom-[56.89%] left-[54.17%] max-w-full overflow-hidden max-h-full"
+          className="absolute h-[121px] w-[181px] top-[11.59%] right-[17.61%] bottom-[56.89%] left-[54.17%] max-w-full overflow-hidden max-h-full"
           alt=""
           src="/vectorlens.svg"
         />
-        <div className="absolute top-[258px] left-[85px] inline-block w-[399px] h-[72px]">
-          <p className="m-0">Lens ID : 1</p>
-          <p className="m-0">Username: Lens</p>
-        </div>
-        <div className="absolute top-[213px] left-[159px] text-xl inline-block w-[246px] h-6">
-          0x89c........7d21f111
-        </div>
-        <div className="absolute top-[337px] left-[361px] w-[167px] h-[41.3px]">
-          <div className="absolute top-[0px] left-[0px] bg-forestgreen-200 w-[167px] h-[41.3px]" />
-          <img
-            className="absolute top-[15.9px] left-[138px] rounded-6xs w-6 h-[24.4px]"
-            alt=""
-            src="/arrowbigcornerlinedown.svg"
-          />
-          <div className="absolute top-[5.3px] left-[9px] inline-block w-[129px] h-[23.3px]">
-            LOGOUT
+        <div className=" flex gap-2 absolute top-[258px] left-[85px] w-[599px] h-[72px] text-justify">
+          <div> 
+          <p className="m-0 text-3xl text">Lens ID  </p><p className="m-0 text-3xl">Username</p>
+          </div>
+          <div>
+          <p className="m-0 text-3xl">: 111</p><p className="m-0 text-3xl">: Lens</p>
           </div>
         </div>
+        <div className="absolute top-[213px] left-[259px] text-xl inline-block w-[246px] h-6">
+          0x89c........7d21f111
+        </div>
+        <img
+          className="absolute h-[121px] w-[181px] top-[80.59%] right-[67.61%] bottom-[56.89%] left-[70.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
+          hover:scale-105"
+          alt=""
+          src="/logoutbutton.svg"
+        />
       </div>
       
-      <div className="absolute top-[151px] left-[1116px] w-[615px] h-[603px] text-xl text-gray-100 font-sans">
+      <div className="absolute top-[231px] left-[1116px] w-[615px] h-[603px] text-xl text-gray-100 font-sans">
       
         <div className="absolute top-[0px] left-[0px] rounded-xl  box-border w-[594px] h-[603px] border-[2px] border-dashed border-[#025231]" />
         <div className="absolute top-[49px] left-[56px] text-[28px] text-white inline-block w-[379px] h-[68px]">
