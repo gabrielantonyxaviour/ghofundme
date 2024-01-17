@@ -48,7 +48,7 @@ const page: NextPage = () => {
           alt=""
           src="/vectorlens.svg"
         />
-        <div className=" flex gap-2 absolute top-[258px] left-[85px] w-[599px] h-[72px] text-justify">
+        <div className=" flex gap-2 absolute top-[258px] left-[75px] w-[599px] h-[72px] text-justify">
           <div> 
           <p className="m-0 text-3xl text">Lens ID  </p><p className="m-0 text-3xl">Username</p>
           </div>
@@ -56,8 +56,14 @@ const page: NextPage = () => {
           <p className="m-0 text-3xl">: 111</p><p className="m-0 text-3xl">: Lens</p>
           </div>
         </div>
-        <div className="absolute top-[213px] left-[259px] text-xl inline-block w-[246px] h-6">
-        {address?.substring(0, 10) + "......." + address?.substring(address?.length - 8)}
+        <div className="absolute top-[213px] left-[209px] text-xl inline-block w-[246px] h-6">
+        {!isConnecting?(address?.substring(0, 10) + "......." + address?.substring(address?.length - 8)):
+        (<div className='flex space-x-2 absolute top-[0px] left-[109px] text-xl w-[246px] h-6'>
+        <span className='sr-only'>Loading...</span>
+         <div className='h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]'></div>
+       <div className='h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]'></div>
+       <div className='h-8 w-8 bg-white rounded-full animate-bounce'></div>
+   </div>)}
         </div>
         <img
           className="absolute h-[121px] w-[181px] top-[80.59%] right-[67.61%] bottom-[56.89%] left-[70.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
