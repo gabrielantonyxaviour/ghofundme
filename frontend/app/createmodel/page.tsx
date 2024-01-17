@@ -1,6 +1,19 @@
+'use client'
 import type { NextPage } from "next";
+import { useDisconnect } from "wagmi";
+import { useAccount } from 'wagmi'
+import { redirect } from 'next/navigation';
+import { useEffect } from "react";
+
 
 const page: NextPage = () => {
+    const { address, isConnecting, isDisconnected } = useAccount()
+    const { disconnect } = useDisconnect()
+    useEffect(() => {
+      if(isDisconnected){redirect('/landing')}
+    }, [isDisconnected])
+    
+
   return (
     <div className="relative bg-gray-200 w-full h-screen overflow-hidden text-left text-5xl text-white font-monument-extended">
       {/* <div className="absolute top-[-241px] left-[1366px] w-[1366px] h-[1009px] [transform:_rotate(180deg)] [transform-origin:0_0]" /> */}
@@ -44,13 +57,16 @@ const page: NextPage = () => {
           </div>
         </div>
         <div className="absolute top-[213px] left-[259px] text-xl inline-block w-[246px] h-6">
-          0x89c........7d21f111
+        {address?.substring(0, 10) + "......." + address?.substring(address?.length - 8)}
         </div>
         <img
           className="absolute h-[121px] w-[181px] top-[80.59%] right-[67.61%] bottom-[56.89%] left-[70.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
           hover:scale-105"
           alt=""
           src="/logoutbutton.svg"
+          onClick={() =>
+            {   disconnect()
+            }}
         />
       </div>
       

@@ -1,17 +1,13 @@
 'use client'
 
 import type { NextPage } from "next";
-import Image from "next/image";
 import { redirect } from 'next/navigation';
 
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { useAccount } from 'wagmi'
-import { disconnect } from '@wagmi/core'
-import { usePathname } from 'next/navigation'
 const landing: NextPage = () => {
     const { open } = useWeb3Modal()
     const { address } = useAccount()
-    const pathname = usePathname()
   return (<>
     {!address ?(<div className="relative bg-[#201F1F] w-full h-screen overflow-hidden text-left text-[18px] text-white font-montserrat">
       <div className="absolute top-[-241px] left-[0px] w-full h-[1200px] overflow-hidden">
