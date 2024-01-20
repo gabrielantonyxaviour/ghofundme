@@ -16,7 +16,7 @@ error SenderNotAllowlisted(address sender); // Used when the sender has not been
 contract ERC4626VaultImplementation is CCIPReceiver{
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     address public owner;
-    string private s_lastReceivedText; // Store the last received text.
+    bytes private s_lastReceivedData; // Store the last received data.
     address public rewardTokenAddress;
 
     // Mapping to keep track of allowlisted destination chains.
@@ -29,6 +29,16 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     mapping(address => bool) public allowlistedSenders;
 
     IERC20 private s_linkToken;
+
+
+    /// @notice Constructor initializes the contract with the router address.
+    /// @param _router The address of the router contract.
+    /// @param _link The address of the link contract.
+    constructor(address _router, address _link) CCIPReceiver(_router) {
+        s_linkToken = IERC20(_link);
+    }
+
+    // Events
 
     // Event emitted when a message is sent to another chain.
     event MessageSent(
@@ -45,19 +55,14 @@ contract ERC4626VaultImplementation is CCIPReceiver{
         bytes32 indexed messageId, // The unique ID of the CCIP message.
         uint64 indexed sourceChainSelector, // The chain selector of the source chain.
         address sender, // The address of the sender from the source chain.
-        string text // The text that was received.
+        bytes data // The data that was received.
     );
+
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     event Initialized(address indexed creator, uint256 indexed lensProfileId, address indexed moduleAddress, uint64 chainSelector,address rewardTokenAddress);
 
-    /// @notice Constructor initializes the contract with the router address.
-    /// @param _router The address of the router contract.
-    /// @param _link The address of the link contract.
-    constructor(address _router, address _link) CCIPReceiver(_router) {
-        s_linkToken = IERC20(_link);
-    }
 
     // Modifers
 
@@ -184,18 +189,19 @@ contract ERC4626VaultImplementation is CCIPReceiver{
         ) // Make sure source chain and sender are allowlisted
     {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
-        s_lastReceivedText = abi.decode(any2EvmMessage.data, (string)); // abi-decoding of the sent text
+        s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
+       
 
         emit MessageReceived(
             any2EvmMessage.messageId,
             any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
             abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
-            abi.decode(any2EvmMessage.data, (string))
+            any2EvmMessage.data
         );
     }
 
     /// @notice Construct a CCIP message.
-    /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for sending a text.
+    /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for sending a data.
     /// @param _receiver The address of the receiver.
     /// @param _data The raw data to be sent.
     /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.
@@ -222,13 +228,13 @@ contract ERC4626VaultImplementation is CCIPReceiver{
 
     /// @notice Fetches the details of the last received message.
     /// @return messageId The ID of the last received message.
-    /// @return text The last received text.
+    /// @return data The last received data.
     function getLastReceivedMessageDetails()
         external
         view
-        returns (bytes32 messageId, string memory text)
+        returns (bytes32 messageId, bytes memory data)
     {
-        return (s_lastReceivedMessageId, s_lastReceivedText);
+        return (s_lastReceivedMessageId, s_lastReceivedData);
     }
 
 
