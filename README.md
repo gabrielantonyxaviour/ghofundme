@@ -1,5 +1,7 @@
 ![Ghfundme_1](https://github.com/gabrielantonyxaviour/ghofundme/assets/79229998/12d61674-fdf4-4d86-a11c-6b91d87d3ab4)
 
+**ETHGlobal LFGHO 2024 Hackathon Submission**
+
 ## Problem Statement
 
 There is no standard implementation to support content creators in web3. Social media applications like Instagram and Twitter have come up with ways to support the creator or subscribing to view exclusive content provided by the creator. Even though certain applications in web3 provide solutions to reward content creators in their own application. Is there a way to create a standard for subscription based rewards for creators and exclusive content for fans in web3 social media infrastructure like Lens?
