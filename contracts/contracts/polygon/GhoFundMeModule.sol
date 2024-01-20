@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 import "@aave/lens-protocol/contracts/interfaces/IFollowModule.sol";
 import "@aave/lens-protocol/contracts/core/modules/ModuleBase.sol";
 import "@aave/lens-protocol/contracts/core/modules/follow/FollowValidatorFollowModuleBase.sol";
-import "./base/GhoFundMeModuleBase.sol";
 
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -21,6 +20,13 @@ error SenderNotAllowlisted(address sender); // Used when the sender has not been
 
 
 contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowModuleBase, CCIPReceiver {
+
+    // address of Lens Hub
+    address public constant LENS_HUB=0x4fbfff20302f3326b20052ab9c217c44f6480900;
+
+
+
+    // address of 
 
     IERC20 private s_linkToken;
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
@@ -45,7 +51,7 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
     string private _moduleMetadataURI;
     address public vaultFactory;
 
-    constructor(address hub, address moduleGlobals,address _router, address _link) GhoFundMeModuleBase(moduleGlobals)  ModuleBase(hub) CCIPReceiver(_router){
+    constructor(address _router, address _link)  ModuleBase(hub) CCIPReceiver(_router){
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
         s_linkToken = IERC20(_link);
@@ -108,7 +114,11 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
         emit OwnershipTransferred(owner, newOwner);
     }
 
+    // GHOFundMeModule Functions
 
+    function createFanToken(string memory mintTokenURI, string memory fanTokenURI, uint256 lensProfileId, uint256 mintPriceInGHO, uint256 minimumMintAmount) external {
+        // require()
+    }
 
     // Chainlink CCIP functions
 
