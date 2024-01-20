@@ -175,6 +175,83 @@ contract ERC4626VaultFactory is CCIPReceiver{
 
     // Chainlink CCIP functions
 
+    // @notice Sends data to receiver on the destination chain.
+    /// @notice Pay for fees in LINK.
+    /// @dev Assumes your contract has sufficient LINK.
+    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param _receiver The address of the recipient on the destination blockchain.
+    /// @param _data The data that is sent cross-chain.
+    /// @return messageId The ID of the CCIP message that was sent.
+    function _sendMessagePayLINK(
+        uint64 _destinationChainSelector,
+        address _receiver,
+        bytes calldata _data
+    )
+        internal
+        returns (bytes32 messageId)
+    {
+        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            _receiver,
+            _data,
+            address(s_linkToken)
+        );
+
+        // Initialize a router client instance to interact with cross-chain router
+        IRouterClient router = IRouterClient(this.getRouter());
+
+        // Get the fee required to send the CCIP message
+        uint256 fees = router.getFee(_destinationChainSelector, evm2AnyMessage);
+
+        if (fees > s_linkToken.balanceOf(address(this)))
+            revert NotEnoughBalance(s_linkToken.balanceOf(address(this)), fees);
+
+        // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
+        s_linkToken.approve(address(router), fees);
+
+        // Send the CCIP message through the router and store the returned CCIP message ID
+        messageId = router.ccipSend(_destinationChainSelector, evm2AnyMessage);
+
+        // Emit an event with message details
+        emit MessageSent(
+            messageId,
+            _destinationChainSelector,
+            _receiver,
+            _data,
+            address(s_linkToken),
+            fees
+        );
+
+        // Return the CCIP message ID
+        return messageId;
+    }
+
+    /// @notice Construct a CCIP message.
+    /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for sending a data.
+    /// @param _receiver The address of the receiver.
+    /// @param _data The raw data to be sent.
+    /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.
+    /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
+    function _buildCCIPMessage(
+        address _receiver,
+        bytes calldata _data,
+        address _feeTokenAddress
+    ) internal pure returns (Client.EVM2AnyMessage memory) {
+        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
+        return
+            Client.EVM2AnyMessage({
+                receiver: abi.encode(_receiver), // ABI-encoded receiver address
+                data: abi.encode(_data), // ABI-encoded string
+                tokenAmounts: new Client.EVMTokenAmount[](0), // Empty array aas no tokens are transferred
+                extraArgs: Client._argsToBytes(
+                    // Additional arguments, setting gas limit
+                    Client.EVMExtraArgsV1({gasLimit: 200_000})
+                ),
+                // Set the feeToken to a feeTokenAddress, indicating specific asset will be used for fees
+                feeToken: _feeTokenAddress
+            });
+    }
+
     /// handle a received message
     function _ccipReceive(
         Client.Any2EVMMessage memory any2EvmMessage
