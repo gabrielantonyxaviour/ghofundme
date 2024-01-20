@@ -7,6 +7,8 @@ import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
+import "../interface/IERC4626Vault.sol";
+
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
 error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
@@ -14,17 +16,26 @@ error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used w
 error SourceChainNotAllowlisted(uint64 sourceChainSelector); // Used when the source chain has not been allowlisted by the contract owner.
 error SenderNotAllowlisted(address sender); // Used when the sender has not been allowlisted by the contract owner.
 
+
+
 contract ERC4626VaultFactory is CCIPReceiver{
     
     struct Vault{
         uint256 fanTokenId;
         uint256 creatorLensProfileId;
+        uint256 mintPriceInGHO;
         address moduleAddress;
         address vaultAddress;
         address creator;
-        address rewardToken;
         uint64 sourceChainSelector;
     }
+
+    struct CrosschainMessage{
+        uint256 fanTokenId;
+        uint256 creatorLensProfileId;
+        address creatorAddress;
+        uint256 mintPriceInGHO;
+    }   
 
     address public vaultImplementation;
     address public owner;
@@ -43,8 +54,8 @@ contract ERC4626VaultFactory is CCIPReceiver{
     // Mapping to keep track of allowlisted senders.
     mapping(address => bool) public allowlistedSenders;
 
-    constructor(address _vaultImplementation,address _router, address _link, uint64 _chainSelector,address _moduleAddress) CCIPReceiver(_router) {
-        vaultImplementation = _vaultImplementation;
+    constructor(address _crossChainMessageImplementation,address _router, address _link, uint64 _chainSelector,address _moduleAddress) CCIPReceiver(_router) {
+        vaultImplementation = _crossChainMessageImplementation;
         s_linkToken = IERC20(_link);
         allowlistedDestinationChains[_chainSelector] = true;
         allowlistedSourceChains[_chainSelector] = true;
@@ -71,7 +82,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     );
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event VaultDeployed(address indexed _vault);
+    event VaultDeployed(address indexed _crossChainMessage);
 
 
     // Modifers
@@ -118,11 +129,12 @@ contract ERC4626VaultFactory is CCIPReceiver{
 
     // @notice Internal Function that deploys a vault on receiving a CCIP message from GHOFundMe module.
     function _deployVault(
-        Vault memory _vault
+        CrosschainMessage memory _crossChainMessage,
+        address _moduleAddress,
+        uint64 _chainSelector
     ) internal returns (address _vaultAddress) {
-        _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_vault.creator)));
-        vaults[_vault.creator] = _vault;
-        vaults[_vault.creator].vaultAddress=_vaultAddress;
+        _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_crossChainMessage.creatorAddress)));
+        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_crossChainMessage.mintPriceInGHO,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
     }
     
     function _deployProxy(
@@ -167,7 +179,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
-        address _deployedVault=_deployVault(abi.decode(any2EvmMessage.data, (Vault)));
+        address _deployedVault=_deployVault(abi.decode(any2EvmMessage.data, (CrosschainMessage)),abi.decode(any2EvmMessage.sender, (address)),any2EvmMessage.sourceChainSelector);
         emit VaultDeployed(_deployedVault);
         emit MessageReceived(
             any2EvmMessage.messageId,
