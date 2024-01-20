@@ -32,6 +32,43 @@ Let us consider the scenario where 1 Fan Token is priced at 1 GHO. When the fan 
 
 ![Claim Revenue](screenshots/claim-rewards.png)
 
+## Contract Architecture
+
+1. GHOFundMe Vault (Ethereum)
+   - Subscribe (Called by anyone sends cross chain call using CCIP)
+     1. Permit the GHO tokens to be transferred to the vault using permit signature (Ethereum)
+     2. Increment Total Value locked by the fan (Ethereum)
+     3. Add the value into the total value locked in a month window (Ethereum)
+     4. Send the success message back to Polygon. (Ethereum)
+     5. If success, mint the fan tokens to the user. (Polygon)
+   - Claim Rewards By Creator
+     1. Check if claimed till previous window
+     2. Set Latest Claimed window to the window till claimed
+     3. Transfer rewards to the creator
+2. GHOFundMe Module (Polygon)
+   - Create Fan Token (Called by any Lens Account Holder to create fan tokens and deploy a vault on Ethereum)
+     1. Checks if the fan token already created for the creator (Polygon)
+     2. Computes the address of the vault to be deployed on Ethereum using Create2 (Polygon)
+     3. Deploys Fan Mint and Fan Trade tokens. (Polygon)
+     4. Sends crosschain transaction to deploy the vault (Polygon)
+     5. Checks if the vault already deployed (Etheruem)
+     6. Deploys the vault (Ethereum)
+   - Terminate Subscription By User (Called by Anyone)
+     1. Get the price it was locked for (Polygon)
+     2. Check if the fan holds the right amount of Fan Trade and Fan Mint tokens (Polygon)
+     3. Burn the tokens and send a cross chain transaction to Ethereum to release the GHO tokens. (Polygon)
+     4. Calculates the total claimmable amount and transfers it to the fan. (Ethereum)
+
+## Contract Actions in the Frontend
+
+1. Create Lens Profile - Creator (DEMO)
+2. Enable GHOFundMe Module - Fans (DEMO)
+3. Create GHOFundMe Profile - Creator (DEMO) | Our Contract
+4. Subscribe using Follow Module - Fans (DEMO) | Our Contract
+5. Subscribe without using Follow Module - Fans (DEMO) | Our Contract
+6. Claim Rewards - Creator | Our Contract
+7. Terminate Subscription - Fans | Our Contract
+
 ## Frontend
 
 ##### Business side
