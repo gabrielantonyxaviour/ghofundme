@@ -45,11 +45,13 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
     string private _moduleMetadataURI;
     address public vaultFactory;
 
-    constructor(address hub, address moduleGlobals) GhoFundMeModuleBase(moduleGlobals)  ModuleBase(hub) {
+    constructor(address hub, address moduleGlobals,address _router, address _link) GhoFundMeModuleBase(moduleGlobals)  ModuleBase(hub) CCIPReceiver(_router){
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
+        s_linkToken = IERC20(_link);
     }
-        // Events
+    
+    // Events
 
     // Event emitted when a message is sent to another chain.
     event MessageSent(
@@ -105,6 +107,8 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
         owner = newOwner;
         emit OwnershipTransferred(owner, newOwner);
     }
+
+
 
     // Chainlink CCIP functions
 
@@ -220,10 +224,6 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
     }
 
     // Lens Module Functions
-
-    function supportsInterface(bytes4 interfaceID) public pure  returns (bool) {
-    	return interfaceID == type(IFollowModule).interfaceId;
- 	}
 
     function initializeFollowModule(
 		uint256 profileId,
