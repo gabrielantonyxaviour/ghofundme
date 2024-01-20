@@ -46,6 +46,12 @@ contract ERC4626VaultFactory is CCIPReceiver{
     // The address of the GHO token in Sepolia.
     address public constant GHO_TOKEN_ADDRESS=0xc4bF5CbDaBE595361438F8c6a187bDc330539c60;
 
+    // Chain Selector for Sepolia
+    uint64 public SEPOLIA_CHAIN_SELECTOR=16015286601757825753;
+
+    // Chain Selector for Polygon
+    uint64 public POLYGON_CHAIN_SELECTOR=12532609583862916517;
+
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedDestinationChains;
 
