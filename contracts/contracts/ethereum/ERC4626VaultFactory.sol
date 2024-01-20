@@ -43,6 +43,9 @@ contract ERC4626VaultFactory is CCIPReceiver{
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     bytes private s_lastReceivedData; // Store the last received data.
 
+    // The address of the GHO token in Sepolia.
+    address public constant GHO_TOKEN_ADDRESS=0xc4bF5CbDaBE595361438F8c6a187bDc330539c60;
+
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedDestinationChains;
 
@@ -133,7 +136,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     ) internal returns (address _vaultAddress) {
         _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_crossChainMessage.creatorAddress)));
         vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
-        require(IERC4626Vault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector));
+        require(IERC4626Vault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector,GHO_TOKEN_ADDRESS));
     }
     
     function _deployProxy(

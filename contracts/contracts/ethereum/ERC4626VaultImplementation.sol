@@ -17,6 +17,7 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     address public owner;
     string private s_lastReceivedText; // Store the last received text.
+    address public rewardTokenAddress;
 
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedDestinationChains;
@@ -49,28 +50,13 @@ contract ERC4626VaultImplementation is CCIPReceiver{
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    event Initialized(address indexed creator, uint256 indexed lensProfileId, address indexed moduleAddress, uint64 chainSelector);
+    event Initialized(address indexed creator, uint256 indexed lensProfileId, address indexed moduleAddress, uint64 chainSelector,address rewardTokenAddress);
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
     /// @param _link The address of the link contract.
     constructor(address _router, address _link) CCIPReceiver(_router) {
         s_linkToken = IERC20(_link);
-    }
-
-    /// @notice Initializes the deployed proxy contract
-    /// @param creator The address of the creator of the proxy contract
-    /// @param lensProfileId The lens profile id of the creator
-    /// @param moduleAddress The address of the GHOFundMe Module
-    /// @param chainSelector The chain selector of the chain where the GHOFundMe Module is deployed ie. Polygon 
-    function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector) external returns(bool) {
-        require(owner == address(0), "already initialized");
-        owner = creator;
-        allowlistedDestinationChains[chainSelector] = true;
-        allowlistedSourceChains[chainSelector] = true;
-        emit OwnershipTransferred(address(0), creator);
-        emit Initialized(creator, lensProfileId, moduleAddress, chainSelector);
-        return true;
     }
 
     // Modifers
@@ -105,6 +91,32 @@ contract ERC4626VaultImplementation is CCIPReceiver{
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         owner = newOwner;
         emit OwnershipTransferred(owner, newOwner);
+    }
+
+    // Contract Functions
+
+    /// @notice Initializes the deployed proxy contract
+    /// @param creator The address of the creator of the proxy contract
+    /// @param lensProfileId The lens profile id of the creator
+    /// @param moduleAddress The address of the GHOFundMe Module
+    /// @param chainSelector The chain selector of the chain where the GHOFundMe Module is deployed ie. Polygon 
+    function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector,address _rewardTokenAddress) external returns(bool) {
+        require(owner == address(0), "already initialized");
+        owner = creator;
+        allowlistedDestinationChains[chainSelector] = true;
+        allowlistedSourceChains[chainSelector] = true;
+        rewardTokenAddress = _rewardTokenAddress;
+        emit OwnershipTransferred(address(0), creator);
+        emit Initialized(creator, lensProfileId, moduleAddress, chainSelector,_rewardTokenAddress);
+        return true;
+    }
+
+    function _lockFundsByModule(uint256 amount) internal {
+        IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amount);
+    }
+
+    function _lockFundsByUser(uint256 amount) internal {
+        IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amount);
     }
     
     // Chainlink CCIP functions
