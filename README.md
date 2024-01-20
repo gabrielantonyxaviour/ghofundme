@@ -104,5 +104,5 @@ A custom widget that users can integrate into their Lens applications. For the h
 Donate here => 0x5A6B842891032d702517a4E52ec38eE561063539
 
 
-Made with ❤ by Romario Kavin and Gabriel Antony Xaviour
+Made with ❤ by **Romario Kavin** and **Gabriel Antony Xaviour**
 
