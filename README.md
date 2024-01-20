@@ -16,19 +16,19 @@ Let us consider the scenario where 1 Fan Token is priced at 1 GHO. When the fan 
 
 ## Flow Diagram
 
-#### Create GHOFundMe Account for Creator
+#### 1. Create GHOFundMe Account for Creator
 
 ![Create Account](screenshots/create-account.png)
 
-#### Deposit Funds and Mint Fan Tokens for Fans.
+#### 2. Deposit Funds and Mint Fan Tokens for Fans.
 
 ![Mint Tokens](screenshots/mint-tokens.png)
 
-#### Terminate subscription with a creator for Fans.
+#### 3. Terminate subscription with a creator for Fans.
 
 ![Terminate Subscription](screenshots/teminate-subscription.png)
 
-#### Claim Revenue from subscription for Creator.
+#### 4. Claim Revenue from subscription for Creator.
 
 ![Claim Revenue](screenshots/claim-rewards.png)
 
