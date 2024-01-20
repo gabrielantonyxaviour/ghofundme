@@ -33,7 +33,7 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     // Chain Selector for Sepolia
     uint64 public SEPOLIA_CHAIN_SELECTOR=16015286601757825753;
 
-    // Chain Selector for Polygon
+    // Chain Selector for Mumbai
     uint64 public POLYGON_CHAIN_SELECTOR=12532609583862916517;
 
     mapping(address => uint256) public userTotalLockedFunds;

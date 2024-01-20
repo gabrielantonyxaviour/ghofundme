@@ -21,7 +21,7 @@ error SenderNotAllowlisted(address sender); // Used when the sender has not been
 
 contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowModuleBase, CCIPReceiver {
 
-    // address of Lens Hub
+    // address of Lens Hub in Mumbai Testnet
     address public constant LENS_HUB=0x4fbfff20302f3326b20052ab9c217c44f6480900;
 
 
@@ -41,14 +41,14 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
     // Chain Selector for Sepolia
     uint64 public SEPOLIA_CHAIN_SELECTOR=16015286601757825753;
 
-    // Chain Selector for Polygon
+    // Chain Selector for Mumbai
     uint64 public POLYGON_CHAIN_SELECTOR=12532609583862916517;
 
     address public owner;
     string private _moduleMetadataURI;
     address public vaultFactory;
 
-    constructor(address _router, address _link)  ModuleBase(hub) CCIPReceiver(_router){
+    constructor(address _router, address _link)  ModuleBase(LENS_HUB) CCIPReceiver(_router){
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
         s_linkToken = IERC20(_link);
