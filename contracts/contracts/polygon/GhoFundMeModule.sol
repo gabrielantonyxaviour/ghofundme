@@ -25,9 +25,6 @@ contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowMod
     address public constant LENS_HUB=0x4fbfff20302f3326b20052ab9c217c44f6480900;
 
 
-
-    // address of 
-
     IERC20 private s_linkToken;
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     bytes private s_lastReceivedData; // Store the last received data.
