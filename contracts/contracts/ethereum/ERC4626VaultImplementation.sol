@@ -63,13 +63,14 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     /// @param lensProfileId The lens profile id of the creator
     /// @param moduleAddress The address of the GHOFundMe Module
     /// @param chainSelector The chain selector of the chain where the GHOFundMe Module is deployed ie. Polygon 
-    function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector) public {
+    function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector) external returns(bool) {
         require(owner == address(0), "already initialized");
         owner = creator;
         allowlistedDestinationChains[chainSelector] = true;
         allowlistedSourceChains[chainSelector] = true;
         emit OwnershipTransferred(address(0), creator);
         emit Initialized(creator, lensProfileId, moduleAddress, chainSelector);
+        return true;
     }
 
     // Modifers

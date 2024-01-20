@@ -23,7 +23,6 @@ contract ERC4626VaultFactory is CCIPReceiver{
     struct Vault{
         uint256 fanTokenId;
         uint256 creatorLensProfileId;
-        uint256 mintPriceInGHO;
         address moduleAddress;
         address vaultAddress;
         address creator;
@@ -34,7 +33,6 @@ contract ERC4626VaultFactory is CCIPReceiver{
         uint256 fanTokenId;
         uint256 creatorLensProfileId;
         address creatorAddress;
-        uint256 mintPriceInGHO;
     }   
 
     address public vaultImplementation;
@@ -134,7 +132,8 @@ contract ERC4626VaultFactory is CCIPReceiver{
         uint64 _chainSelector
     ) internal returns (address _vaultAddress) {
         _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_crossChainMessage.creatorAddress)));
-        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_crossChainMessage.mintPriceInGHO,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
+        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
+        require(IERC4626Vault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector));
     }
     
     function _deployProxy(
