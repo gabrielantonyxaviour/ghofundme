@@ -63,6 +63,7 @@
     "printWidth": 120
   },
   "dependencies": {
-    "@aave/lens-protocol": "^1.0.2"
+    "@aave/lens-protocol": "^1.0.2",
+    "@chainlink/contracts-ccip": "^1.2.1"
   }
 }
