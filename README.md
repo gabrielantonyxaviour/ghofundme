@@ -98,3 +98,11 @@ Manage Fan token portfolio
 ## SDK/Widget
 
 A custom widget that users can integrate into their Lens applications. For the hackathon, we aim to integrate this widget into hey.xyz. This widget has a subscribe button which opens up a Modal, in which the GHOFundMe module requests the user to deposit GHO to receive Fan tokens.
+
+
+## Support us 
+Donate here => 0x5A6B842891032d702517a4E52ec38eE561063539
+
+
+Made with ❤ by Romario Kavin and Gabriel Antony Xaviour
+
