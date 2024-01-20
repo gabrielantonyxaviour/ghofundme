@@ -5,6 +5,7 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -19,6 +20,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
         uint256 fanTokenId;
         uint256 creatorLensProfileId;
         address moduleAddress;
+        address vaultAddress;
         address creator;
         address rewardToken;
         uint64 sourceChainSelector;
@@ -69,7 +71,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     );
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event VaultDeployed(Vault indexed _vault);
+    event VaultDeployed(address indexed _vault);
 
 
     // Modifers
@@ -117,12 +119,39 @@ contract ERC4626VaultFactory is CCIPReceiver{
     // @notice Internal Function that deploys a vault on receiving a CCIP message from GHOFundMe module.
     function _deployVault(
         Vault memory _vault
-    ) internal returns (Vault memory) {
-        vaults[_vault.moduleAddress] = _vault;
-        emit VaultDeployed(_vault);
-        return _vault;
+    ) internal returns (address _vaultAddress) {
+        _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_vault.creator)));
+        vaults[_vault.creator] = _vault;
+        vaults[_vault.creator].vaultAddress=_vaultAddress;
     }
     
+    function _deployProxy(
+        address implementation,
+        uint salt
+    ) internal returns (address _contractAddress) {
+        bytes memory code = _creationCode(implementation, salt);
+        _contractAddress = Create2.computeAddress(
+            bytes32(salt),
+            keccak256(code)
+        );
+        if (_contractAddress.code.length != 0) return _contractAddress;
+
+        _contractAddress = Create2.deploy(0, bytes32(salt), code);
+    }
+
+    function _creationCode(
+        address implementation_,
+        uint256 salt_
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                hex"3d60ad80600a3d3981f3363d3d373d3d3d363d73",
+                implementation_,
+                hex"5af43d82803e903d91602b57fd5bf3",
+                abi.encode(salt_)
+            );
+    }
+
     // Chainlink CCIP functions
 
     /// handle a received message
@@ -138,39 +167,14 @@ contract ERC4626VaultFactory is CCIPReceiver{
     {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
-        _deployVault(abi.decode(any2EvmMessage.data, (Vault)));
+        address _deployedVault=_deployVault(abi.decode(any2EvmMessage.data, (Vault)));
+        emit VaultDeployed(_deployedVault);
         emit MessageReceived(
             any2EvmMessage.messageId,
             any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
             abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
             any2EvmMessage.data
         );
-    }
-
-    /// @notice Construct a CCIP message.
-    /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for sending a data.
-    /// @param _receiver The address of the receiver.
-    /// @param _data The raw data to be sent.
-    /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.
-    /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
-    function _buildCCIPMessage(
-        address _receiver,
-        bytes calldata _data,
-        address _feeTokenAddress
-    ) internal pure returns (Client.EVM2AnyMessage memory) {
-        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
-        return
-            Client.EVM2AnyMessage({
-                receiver: abi.encode(_receiver), // ABI-encoded receiver address
-                data: abi.encode(_data), // ABI-encoded string
-                tokenAmounts: new Client.EVMTokenAmount[](0), // Empty array aas no tokens are transferred
-                extraArgs: Client._argsToBytes(
-                    // Additional arguments, setting gas limit
-                    Client.EVMExtraArgsV1({gasLimit: 200_000})
-                ),
-                // Set the feeToken to a feeTokenAddress, indicating specific asset will be used for fees
-                feeToken: _feeTokenAddress
-            });
     }
 
     /// @notice Fetches the details of the last received message.
