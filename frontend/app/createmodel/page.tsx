@@ -3,17 +3,19 @@ import type { NextPage } from "next";
 import { useDisconnect } from "wagmi";
 import { useAccount } from 'wagmi'
 import { redirect } from 'next/navigation';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useProfiles } from '@lens-protocol/react-web'
 
 
 const page: NextPage = () => {
     const { address, isConnecting, isDisconnected } = useAccount()
     const { disconnect } = useDisconnect()
+    const [lensid, setislensid] = useState("")
     useEffect(() => {
-      if(isDisconnected){redirect('/landing')}
+      if(isDisconnected){redirect('/')}
     }, [isDisconnected])
-    
 
+  
   return (
     <div className="relative bg-gray-200 w-full h-screen overflow-hidden text-left text-5xl text-white font-monument-extended">
       {/* <div className="absolute top-[-241px] left-[1366px] w-[1366px] h-[1009px] [transform:_rotate(180deg)] [transform-origin:0_0]" /> */}
@@ -53,7 +55,7 @@ const page: NextPage = () => {
           <p className="m-0 text-3xl text">Lens ID  </p><p className="m-0 text-3xl">Username</p>
           </div>
           <div>
-          <p className="m-0 text-3xl">: 111</p><p className="m-0 text-3xl">: Lens</p>
+          <p className="m-0 text-3xl">: 1</p><p className="m-0 text-3xl">: Lens</p>
           </div>
         </div>
         <div className="absolute top-[213px] left-[209px] text-xl inline-block w-[246px] h-6">
