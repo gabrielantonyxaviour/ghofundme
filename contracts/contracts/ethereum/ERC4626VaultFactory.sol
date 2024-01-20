@@ -141,7 +141,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
         address _moduleAddress,
         uint64 _chainSelector
     ) internal returns (address _vaultAddress) {
-        _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_crossChainMessage.creatorAddress)));
+        _vaultAddress=_deployProxy(vaultImplementation,_crossChainMessage.creatorLensProfileId);
         vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
         require(IERC4626Vault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector,GHO_TOKEN_ADDRESS));
     }
@@ -328,13 +328,5 @@ contract ERC4626VaultFactory is CCIPReceiver{
 
         IERC20(_token).transfer(_beneficiary, amount);
     }
-
-
-
-
-
-
-    
-
 
 }
