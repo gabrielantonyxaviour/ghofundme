@@ -30,6 +30,12 @@ contract ERC4626VaultImplementation is CCIPReceiver{
 
     IERC20 private s_linkToken;
 
+    mapping(address => uint256) public userTotalLockedFunds;
+    // mapping(address => )
+    uint256 public totalLockedFunds;
+    uint256 public totalClaimmableFunds;
+    uint256 public lastClaimedTimestamp;
+
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
@@ -116,12 +122,12 @@ contract ERC4626VaultImplementation is CCIPReceiver{
         return true;
     }
 
-    function _lockFundsByModule(uint256 amount) internal {
-        IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amount);
+    function _lockFundsByModule(address _fan,uint256 _amount) internal {
+        IERC20(rewardTokenAddress).transferFrom(_fan, address(this), _amount);
     }
 
-    function _lockFundsByUser(uint256 amount) internal {
-        IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amount);
+    function _lockFundsByUser(address _fan,uint256 _amount) internal {
+        IERC20(rewardTokenAddress).transferFrom(_fan, address(this), _amount);
     }
     
     // Chainlink CCIP functions

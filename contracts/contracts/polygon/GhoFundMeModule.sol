@@ -5,6 +5,7 @@ import "@aave/lens-protocol/contracts/interfaces/IFollowModule.sol";
 import "@aave/lens-protocol/contracts/core/modules/ModuleBase.sol";
 import "@aave/lens-protocol/contracts/core/modules/follow/FollowValidatorFollowModuleBase.sol";
 import "./base/GhoFundMeModuleBase.sol";
+
 contract GHOFundMeFollowModule is  GhoFundMeModuleBase, FollowValidatorFollowModuleBase {
 
     address public owner;
