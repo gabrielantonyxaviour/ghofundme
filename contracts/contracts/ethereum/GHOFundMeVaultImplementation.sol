@@ -82,7 +82,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     // Event emitted when the contract is initialized.
     event Initialized(address indexed creator, uint256 indexed lensProfileId, address indexed moduleAddress, uint64 chainSelector,address rewardTokenAddress);
 
-    event SubscriptionInitiated(address indexed subscriber,uint256 indexed lensProfileId,uint256 amountInGHO,uint256 totalFanTokensMinted);
+    event SubscriptionInitiated(bytes32 indexed _messageId,address indexed subscriber,uint256 indexed lensProfileId,uint256 amountInGHO,uint256 totalFanTokensMinted);
     // Modifers
 
     /// @dev Modifier that checks if the sender is the owner of the contract.
@@ -162,11 +162,11 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
 
         s_linkToken.transferFrom(address(this),address(vaultFactory),_fee);
         
-        vaultFactory.subscribe(POLYGON_CHAIN_SELECTOR,_data);
+        bytes32 _messageId=vaultFactory.subscribe(POLYGON_CHAIN_SELECTOR,_data);
 
         // handle adding stake balance in the contract state
 
-        emit SubscriptionInitiated(msg.sender, lensProfileId, amountInGHO, _totalMintAmount);
+        emit SubscriptionInitiated(_messageId, msg.sender, lensProfileId, amountInGHO, _totalMintAmount);
     }
     
     // Chainlink CCIP functions

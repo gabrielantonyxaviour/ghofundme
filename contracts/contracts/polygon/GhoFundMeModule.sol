@@ -189,6 +189,30 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         emit FanTokenCreated(_crosschainMessageId,_vaultAddress,_tokenIdCounter,params.lensProfileId,msg.sender);
         _tokenIdCounter++;
     }
+    
+    function _mintTokens(bytes32 _messageId,uint256 _lensProfileId, uint256 _totalMintAmount,address _subscriber) internal {
+        require(accounts[_lensProfileId].exists,"Invalid lens profile id");
+        fanMintToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+        fanTradeToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+        emit MintedFanToken(_messageId,_lensProfileId,accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+    }
+
+    function terminateSubscription(uint256 _lensProfileId,uint256 _tokenAmount) external{
+        require(accounts[_lensProfileId].exists,"Invalid lens profile id");
+        require(fanMintToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
+        require(fanTradeToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
+
+        s_linkToken.transferFrom(msg.sender, address(this), _tokenAmount);
+        fanMintToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
+        fanTradeToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
+        bytes memory _data=abi.encode(_lensProfileId,_tokenAmount,msg.sender);
+        uint256 _fee=_getFee(_lensProfileId,SEPOLIA_CHAIN_SELECTOR,_data);
+        require(s_linkToken.allowance(msg.sender, address(this))>=_fee,"approve LINK for cross chain"); 
+        
+        bytes32 _messageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, accounts[_lensProfileId].vaultAddress,_data);
+
+        emit BurnedFanToken(_messageId,_lensProfileId,accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
+    }
 
     function getVaultAddress(uint256 lensProfileId) public view returns(address _contractAddress)
     {
@@ -211,32 +235,6 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
                 abi.encode(salt_)
             );
     }
-    
-    function _mintTokens(bytes32 _messageId,uint256 _lensProfileId, uint256 _totalMintAmount,address _subscriber) internal {
-        require(accounts[_lensProfileId].exists,"Invalid lens profile id");
-        fanMintToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
-        fanTradeToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
-        emit MintedFanToken(_messageId,_lensProfileId,accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
-    }
-
-
-    function terminateSubscription(uint256 _lensProfileId,uint256 _tokenAmount) external{
-        require(accounts[_lensProfileId].exists,"Invalid lens profile id");
-        require(fanMintToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
-        require(fanTradeToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
-
-        s_linkToken.transferFrom(msg.sender, address(this), _tokenAmount);
-        fanMintToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
-        fanTradeToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
-        bytes memory _data=abi.encode(_lensProfileId,_tokenAmount,msg.sender);
-        uint256 _fee=getFee(SEPOLIA_CHAIN_SELECTOR,_data);
-        require(s_linkToken.allowance(msg.sender, address(this))>=_fee,"approve LINK for cross chain"); 
-        
-        bytes32 _messageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, accounts[_lensProfileId].vaultAddress,_data);
-
-        emit BurnedFanToken(_messageId,_lensProfileId,accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
-    }
-
     // Chainlink CCIP functions
 
     // @notice Sends data to receiver on the destination chain.
@@ -345,11 +343,16 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
             });
     }
 
-        function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    function getFee(uint256 _lensProfileId,uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    {
+        return _getFee(_lensProfileId,_destinationChainSelector, _data);
+    }
+
+    function _getFee(uint256 _lensProfileId,uint64 _destinationChainSelector,bytes memory _data) internal view returns(uint256)
     {
         IRouterClient router = IRouterClient(this.getRouter());
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
-            moduleAddress,
+            getVaultAddress(_lensProfileId),
             _data,
             address(s_linkToken)
         );

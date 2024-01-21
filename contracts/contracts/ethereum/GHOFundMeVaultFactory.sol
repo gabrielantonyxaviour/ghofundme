@@ -185,9 +185,8 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
             );
     }
 
-
-    function subscribeProfile(uint64 _destinationChainSelector,bytes memory _data) external onlyVault {
-        _sendMessagePayLINK(_destinationChainSelector, moduleAddress, _data);
+    function subscribe(uint64 _destinationChainSelector,bytes memory _data) external onlyVault returns(bytes32) {
+        return _sendMessagePayLINK(_destinationChainSelector, moduleAddress, _data);
     }
 
 
@@ -296,6 +295,11 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     }
 
     function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    {
+        return _getFee(_destinationChainSelector, _data);
+    }
+
+    function _getFee(uint64 _destinationChainSelector,bytes memory _data) internal view returns(uint256)
     {
         IRouterClient router = IRouterClient(this.getRouter());
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
