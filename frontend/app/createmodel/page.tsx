@@ -52,6 +52,8 @@ const page: NextPage = () => {
     functionName: "getLatestTokenId",
     args: [],
   });
+  console.log("aaa"+parseAbiParameters("uint, uint, address, uint, uint"));
+  console.log("bbb",tokenIdCounter,profiles && profiles.length > 0 && profiles[0].id,accountAddress as `0x${string}`,mintPrice as any,minMintAmount as any);
   const { data: fee, refetch: getFee } = useContractRead({
     address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
     abi: MODULE_ABI,
@@ -59,10 +61,11 @@ const page: NextPage = () => {
     args: [
       profiles && profiles.length > 0 && profiles[0].id,
       DEPLOYMENTS.ethereumSelector,
+      
       encodeAbiParameters(
         parseAbiParameters("uint, uint, address, uint, uint"),
         [
-          tokenIdCounter as any,
+          tokenIdCounter?tokenIdCounter:"" as any,
           profiles && profiles.length > 0 && profiles[0].id,
           accountAddress as `0x${string}`,
           mintPrice as any,
@@ -116,14 +119,14 @@ const page: NextPage = () => {
         </div>
       </div>
       <div className="absolute top-[230px] left-[110px] w-[763px] h-[612px] font-sans">
-        <div className="absolute top-[0px] left-[0px] rounded-xl bg-[#599E40] opacity-25 w-[763px] h-[612px]" />
+        <div className="absolute top-[0px] left-[100px] rounded-xl bg-[#599E40] opacity-25 w-[563px] h-[612px]" />
         <img
           className="absolute h-[121px] w-[181px] top-[11.59%] right-[17.61%] bottom-[56.89%] left-[40.17%] max-w-full overflow-hidden max-h-full"
           alt=""
           src="/vectorlens.svg"
         />
         {profiles.length > 0 && (
-          <div className=" flex gap-2 absolute top-[258px] left-[75px] w-[599px] h-[72px] text-justify">
+          <div className=" flex gap-2 absolute top-[258px] left-[175px] w-[599px] h-[72px] text-justify">
             <div>
               <p className="m-0 text-3xl text">Lens ID </p>
               <p className="m-0 text-3xl">Username</p>
@@ -253,7 +256,7 @@ const page: NextPage = () => {
         <div className=" w-[199px] h-[193px] text-center text-[15px]">
           <div className="absolute flex top-[0px] left-[32px] rounded-[31px] bg-forestgreen-100 w-[132px] h-[132px]" />
           <p>FUND LINK</p>
-          <img
+          {/* <img
             className="absolute top-[10px] left-[35px] w-[140px] h-[140px] cursor-pointer py-6 rounded-lg 
             transform transition duration-500 
             hover:scale-105"
@@ -265,7 +268,7 @@ const page: NextPage = () => {
                 args: [DEPLOYMENTS.ghoFundMeModule, fee],
               });
             }}
-          />
+          /> */}
         </div>
         <button
           onClick={async () => {
