@@ -70,12 +70,12 @@ const page: NextPage = () => {
           </div>
         </div>
         <div className="absolute top-[213px] left-[209px] text-xl inline-block w-[246px] h-6">
-        {/* {!isConnecting?(address?.substring(0, 10) + "......." + address?.substring(address?.length - 8)):
+        {!isConnecting?(address?.substring(0, 10) + "......." + address?.substring(address?.length - 8)):
         (<div className='flex space-x-2 absolute top-[0px] left-[109px] text-xl w-[246px] h-6'>
          <div className='h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]'></div>
        <div className='h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]'></div>
        <div className='h-8 w-8 bg-white rounded-full animate-bounce'></div>
-   </div>)} */}
+   </div>)}
         </div>
         <img
           className="absolute h-[121px] w-[181px] top-[80.59%] right-[67.61%] bottom-[56.89%] left-[70.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
