@@ -1,9 +1,9 @@
 const DEPLOYMENTS = {
-  vaultImplementation: "0xc69Cc87821cE795fEF52eA3aCa137681ABb46cA0",
-  vaultFactory: "0x1B98dc6610D9Ea9A5359DD4C305dB00039723a4C",
-  ghoFundMeModule: "0x9CFf54892D803e08123ba17f90AD78E398646218",
-  fanMintToken: "0x6d243899d3703C1dBcb97D4428d21FCE5E7d90a5",
-  fanTradeToken: "0x2625348d24d7A362bF5Fba2832F9fCE741927878",
+  vaultImplementation: "0x03f67022442CB4dcdcf1e44f1C32B2bC208613AC",
+  vaultFactory: "0x01C053A2222cf0b7c1AC0c828A268440a55aF7cF",
+  ghoFundMeModule: "0x2BaBE53698ee80A7DB726AEd2A8aA94546448404",
+  fanMintToken: "0xB29067d2f5C2e020B93a7881438d2D5b7dDF92CD",
+  fanTradeToken: "0xf8179814BE9793a79e43c9bbe0feC001b23e2d74",
   polygonLINK: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
   sepoliaLINK: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
   polygonSelector: "12532609583862916517",
@@ -1989,6 +1989,19 @@ const MODULE_ABI = [
   },
   {
     inputs: [],
+    name: "getLatestTokenId",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "getRouter",
     outputs: [
       {
@@ -2269,6 +2282,7 @@ const MODULE_ABI = [
     type: "receive",
   },
 ];
+
 const LINK_ABI = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   {
