@@ -5,6 +5,8 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import "../interface/IGHOFundMeVaultFactory.sol";
 
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -18,6 +20,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     address public owner;
     bytes private s_lastReceivedData; // Store the last received data.
     address public rewardTokenAddress;
+    IGHOFundMeVaultFactory public vaultFactory;
 
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedDestinationChains;
@@ -79,7 +82,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     // Event emitted when the contract is initialized.
     event Initialized(address indexed creator, uint256 indexed lensProfileId, address indexed moduleAddress, uint64 chainSelector,address rewardTokenAddress);
 
-
+    event SubscriptionInitiated(address indexed subscriber,uint256 indexed lensProfileId,uint256 amountInGHO,uint256 totalFanTokensMinted);
     // Modifers
 
     /// @dev Modifier that checks if the sender is the owner of the contract.
@@ -137,12 +140,33 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         return true;
     }
 
-    function _lockFundsByModule(address _fan,uint256 _amount) internal {
-        IERC20(rewardTokenAddress).transferFrom(_fan, address(this), _amount);
+    function testPermit(address _token,uint256 amountInGHO,uint256 deadline,uint8 v,bytes32 r,bytes32 s) external {
+        IERC20Permit(_token).permit(msg.sender, address(this), amountInGHO, deadline, v, r, s);
+        IERC20(_token).transferFrom(msg.sender, address(this), amountInGHO);
     }
 
-    function _lockFundsByUser(address _fan,uint256 _amount) internal {
-        IERC20(rewardTokenAddress).transferFrom(_fan, address(this), _amount);
+    function subscribe(uint256 lensProfileId, uint256 amountInGHO,uint256 deadline,uint8 v,bytes32 r,bytes32 s) external {
+        require(lensProfileId!=0,"Lens Profile Id cannot be 0");
+        require(amountInGHO>=minimumMintAmount,"Amount is less than minimum mint amount");
+
+        IERC20Permit(rewardTokenAddress).permit(msg.sender, address(this), amountInGHO, deadline, v, r, s);
+        IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amountInGHO);
+
+        uint256 _totalMintAmount=amountInGHO/mintPriceInGHO;
+
+        bytes memory _data=abi.encode(lensProfileId,_totalMintAmount,msg.sender);
+
+        uint256 _fee=vaultFactory.getFee(POLYGON_CHAIN_SELECTOR,_data);
+
+        require(s_linkToken.balanceOf(address(this))>=_fee,"Not enough LINK Balance");
+
+        s_linkToken.transferFrom(address(this),address(vaultFactory),_fee);
+        
+        vaultFactory.subscribe(POLYGON_CHAIN_SELECTOR,_data);
+
+        // handle adding stake balance in the contract state
+
+        emit SubscriptionInitiated(msg.sender, lensProfileId, amountInGHO, _totalMintAmount);
     }
     
     // Chainlink CCIP functions

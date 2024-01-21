@@ -27,6 +27,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
         address vaultAddress;
         address creator;
         uint64 sourceChainSelector;
+        bool exists;
     }
 
     struct CrosschainMessage{
@@ -39,6 +40,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
 
     address public vaultImplementation;
     address public owner;
+    address public moduleAddress;
     mapping(address => Vault) private vaults;
 
     IERC20 private s_linkToken;
@@ -69,6 +71,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
         allowlistedDestinationChains[_chainSelector] = true;
         allowlistedSourceChains[_chainSelector] = true;
         allowlistedSenders[_moduleAddress]=true;
+        moduleAddress=_moduleAddress;
         owner=msg.sender;
         emit OwnershipTransferred(address(0), owner);
     }
@@ -102,6 +105,12 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
         require(msg.sender == owner, "Ownable: caller is not the owner");
         _;
     }
+
+    modifier onlyVault()
+    {
+        require(vaults[msg.sender].exists,"Vault not deployed");
+        _;
+    }
     
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
@@ -133,6 +142,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     /// @param _moduleAddress The address of the module to be allowlisted.
     function addModuleAddress(address _moduleAddress) public onlyOwner{
         allowlistedSenders[_moduleAddress]=true;
+        moduleAddress=_moduleAddress;
     }
 
     // Contract Functions
@@ -144,7 +154,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
         uint64 _chainSelector
     ) internal returns (address _vaultAddress) {
         _vaultAddress=_deployProxy(vaultImplementation,_crossChainMessage.creatorLensProfileId);
-        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
+        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector,true);
         require(IGHOFundMeVault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, GHO_TOKEN_ADDRESS,_crossChainMessage.mintPriceInGHO,_crossChainMessage.minimumMintAmount,_chainSelector));
     }
     
@@ -175,6 +185,22 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
             );
     }
 
+
+    function subscribeProfile(uint64 _destinationChainSelector,bytes memory _data) external onlyVault {
+        _sendMessagePayLINK(_destinationChainSelector, moduleAddress, _data);
+    }
+
+    function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    {
+        IRouterClient router = IRouterClient(this.getRouter());
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            moduleAddress,
+            _data,
+            address(s_linkToken)
+        );
+        return router.getFee(_destinationChainSelector, evm2AnyMessage);
+    }
+
     // Chainlink CCIP functions
 
     // @notice Sends data to receiver on the destination chain.
@@ -187,7 +213,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     function _sendMessagePayLINK(
         uint64 _destinationChainSelector,
         address _receiver,
-        bytes calldata _data
+        bytes memory _data
     )
         internal
         returns (bytes32 messageId)
@@ -236,7 +262,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
     function _buildCCIPMessage(
         address _receiver,
-        bytes calldata _data,
+        bytes memory _data,
         address _feeTokenAddress
     ) internal pure returns (Client.EVM2AnyMessage memory) {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
