@@ -190,16 +190,6 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
         _sendMessagePayLINK(_destinationChainSelector, moduleAddress, _data);
     }
 
-    function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
-    {
-        IRouterClient router = IRouterClient(this.getRouter());
-        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
-            moduleAddress,
-            _data,
-            address(s_linkToken)
-        );
-        return router.getFee(_destinationChainSelector, evm2AnyMessage);
-    }
 
     // Chainlink CCIP functions
 
@@ -303,6 +293,17 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
             abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
             any2EvmMessage.data
         );
+    }
+
+    function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    {
+        IRouterClient router = IRouterClient(this.getRouter());
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            moduleAddress,
+            _data,
+            address(s_linkToken)
+        );
+        return router.getFee(_destinationChainSelector, evm2AnyMessage);
     }
 
     /// @notice Fetches the details of the last received message.
