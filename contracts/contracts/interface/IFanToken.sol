@@ -9,4 +9,6 @@ interface IFanToken {
     function mintToken(uint256 tokenId,uint256 amount,address recipient) external;
 
     function burnToken(uint256 tokenId,uint256 amount,address recipient) external;
+
+    function balanceOf(address account, uint256 id) external view returns (uint256);
 }

@@ -119,7 +119,10 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
     event FanTokenCreated(bytes32 indexed messageId,address vaultAddress,uint256 tokenId,uint256 lensProfileId,address creator);
 
     // Event emitted when a fan token is minted
-    event MintedFanToken(uint256 lensProfileId,uint256 tokenId,uint256 amount,address subscriber);
+    event MintedFanToken(bytes32 indexed messageId,uint256 lensProfileId,uint256 tokenId,uint256 amount,address subscriber);
+
+    // Event emitted when a fan token is burned
+    event BurnedFanToken(bytes32 indexed messageId,uint256 lensProfileId,uint256 tokenId,uint256 amount,address subscriber);
 
     // Modifers
 
@@ -209,11 +212,29 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
             );
     }
     
-    function _mintTokens(uint256 _lensProfileId, uint256 _totalMintAmount,address _subscriber) internal {
+    function _mintTokens(bytes32 _messageId,uint256 _lensProfileId, uint256 _totalMintAmount,address _subscriber) internal {
         require(accounts[_lensProfileId].exists,"Invalid lens profile id");
         fanMintToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+        fanTradeToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+        emit MintedFanToken(_messageId,_lensProfileId,accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+    }
 
-        emit MintedFanToken(_lensProfileId,accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+
+    function terminateSubscription(uint256 _lensProfileId,uint256 _tokenAmount) external{
+        require(accounts[_lensProfileId].exists,"Invalid lens profile id");
+        require(fanMintToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
+        require(fanTradeToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
+
+        s_linkToken.transferFrom(msg.sender, address(this), _tokenAmount);
+        fanMintToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
+        fanTradeToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
+        bytes memory _data=abi.encode(_lensProfileId,_tokenAmount,msg.sender);
+        uint256 _fee=getFee(SEPOLIA_CHAIN_SELECTOR,_data);
+        require(s_linkToken.allowance(msg.sender, address(this))>=_fee,"approve LINK for cross chain"); 
+        
+        bytes32 _messageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, accounts[_lensProfileId].vaultAddress,_data);
+
+        emit BurnedFanToken(_messageId,_lensProfileId,accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
     }
 
     // Chainlink CCIP functions
@@ -289,7 +310,7 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
         (uint256 _lensProfileId,uint256 _totalMintAmount,address _subscriber)=abi.decode(any2EvmMessage.data,(uint256,uint256,address));
-        _mintTokens(_lensProfileId, _totalMintAmount, _subscriber);
+        _mintTokens(any2EvmMessage.messageId,_lensProfileId, _totalMintAmount, _subscriber);
         emit MessageReceived(
             any2EvmMessage.messageId,
             any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
@@ -323,6 +344,18 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
                 feeToken: _feeToken
             });
     }
+
+        function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    {
+        IRouterClient router = IRouterClient(this.getRouter());
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            moduleAddress,
+            _data,
+            address(s_linkToken)
+        );
+        return router.getFee(_destinationChainSelector, evm2AnyMessage);
+    }
+
 
     /// @notice Fetches the details of the last received message.
     /// @return messageId The ID of the last received message.
