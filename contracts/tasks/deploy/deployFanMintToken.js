@@ -24,6 +24,8 @@ task("deploy-mint-token", "Deploys the GHOFanTokenMint contract")
       return
     }
 
+    await new Promise((r) => setTimeout(r, 10000))
+
     const verifyContract = taskArgs.verify
     if (
       network.name !== "localFunctionsTestnet" &&

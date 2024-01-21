@@ -18,11 +18,11 @@ task("deploy-implementation", "Deploys the GHOFundMeVaultImplementation contract
 
     console.log("\nDeployed GHOFundMeVaultImplementation contract to:", implementation.address)
 
-    networks[network.name].implementation = implementation.address
-
     if (network.name === "localFunctionsTestnet") {
       return
     }
+
+    await new Promise((r) => setTimeout(r, 10000))
 
     const verifyContract = taskArgs.verify
     if (

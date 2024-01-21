@@ -31,7 +31,7 @@ const networks = {
     chainSelector: "12532609583862916517",
     router: "0x1035CabC275068e0F4b745A29CEDf38E13aF41b1",
     link: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
-    module: "0x4e5Fa0C09b7246F13470E5967A5E2A113030277c",
+    module: "0x9CFf54892D803e08123ba17f90AD78E398646218",
   },
   sepolia: {
     url: process.env.SEPOLIA_RPC_URL || "UNSET",
@@ -40,14 +40,14 @@ const networks = {
     accounts,
     verifyApiKey: process.env.ETHERSCAN_API_KEY || "UNSET",
     chainId: 11155111,
-    confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
+    confirmations: 5,
     nativeCurrencySymbol: "ETH",
     chainSelector: "16015286601757825753",
     router: "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59",
     link: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
     ccipBnM: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
     ccipLnM: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1",
-    implementation: "0x826dF7f9fEe3760321371d46a5a744bB2fcA4aef",
+    implementation: "0xc69Cc87821cE795fEF52eA3aCa137681ABb46cA0",
   },
 }
 

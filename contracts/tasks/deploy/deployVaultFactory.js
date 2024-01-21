@@ -29,7 +29,7 @@ task("deploy-vault-factory", "Deploys the GHOFundMeVaultFactory contract")
       return
     }
 
-    networks[network.name].vaultFactory = vault.address
+    await new Promise((r) => setTimeout(r, 10000))
 
     const verifyContract = taskArgs.verify
     if (

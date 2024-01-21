@@ -27,6 +27,7 @@ task("deploy-module", "Deploys the GHOFundMeModule contract")
     if (network.name === "localFunctionsTestnet") {
       return
     }
+    await new Promise((r) => setTimeout(r, 10000))
 
     const verifyContract = taskArgs.verify
     if (
