@@ -45,9 +45,8 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     // mapping(address => )
     uint256 public totalLockedFunds;
     uint256 public totalClaimmableFunds;
-    uint256 public lastClaimedTimestamp;
-
-
+    uint256 public latestClaimWindow;
+    uint256 public claimWindowDuration;
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
@@ -90,7 +89,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         require(msg.sender == owner, "Ownable: caller is not the owner");
         _;
     }
-    
+
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
     modifier onlyAllowlistedDestinationChain(uint64 _destinationChainSelector) {
@@ -127,7 +126,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     /// @param _mintPriceInGHO The mint price in GHO
     /// @param _minimumMintAmount The minimum mint amount
     /// @param _chainSelector The chain selector of the source chain. ie. Polygon Mumbai
-    function initialize(address creator, uint256 lensProfileId,address moduleAddress,address _rewardTokenAddress, uint256 _mintPriceInGHO,uint256 _minimumMintAmount,uint64 _chainSelector) external returns(bool) {
+    function initialize(address creator, uint256 lensProfileId,address moduleAddress,address _rewardTokenAddress, uint256 _mintPriceInGHO,uint256 _minimumMintAmount,uint256 _claimWindowDuration,uint64 _chainSelector) external returns(bool) {
         require(owner == address(0), "already initialized");
         owner = creator;
         allowlistedDestinationChains[_chainSelector] = true;
@@ -135,6 +134,8 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         rewardTokenAddress = _rewardTokenAddress;
         mintPriceInGHO = _mintPriceInGHO;
         minimumMintAmount = _minimumMintAmount;
+        claimWindowDuration=_claimWindowDuration;
+        latestClaimWindow=block.timestamp/claimWindowDuration;
         emit OwnershipTransferred(address(0), creator);
         emit Initialized(creator, lensProfileId, moduleAddress, _chainSelector,_rewardTokenAddress);
         return true;
@@ -164,11 +165,9 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         
         bytes32 _messageId=vaultFactory.subscribe(POLYGON_CHAIN_SELECTOR,_data);
 
-        // handle adding stake balance in the contract state
-
         emit SubscriptionInitiated(_messageId, msg.sender, lensProfileId, amountInGHO, _totalMintAmount);
     }
-    
+
     // Chainlink CCIP functions
 
     /// handle a received message
