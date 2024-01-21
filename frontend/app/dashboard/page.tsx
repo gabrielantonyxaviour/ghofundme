@@ -13,8 +13,11 @@ const page: NextPage = () => {
     // useEffect(() => {
     //   if(isDisconnected){redirect('/')}
     // }, [isDisconnected])
-
-  const address = "0x1234567890123456789012345678901234567890"
+    const [totalClaimableGho, setTotalClaimableGho] = useState(0)
+    const [claimableWindow, setClaimableWindow] = useState(0)
+    const [volumeOfFanTokenTraded, setVolumeOfFanTokenTraded] = useState(0)
+    const [totalGhoStaked, setTotalGhoStaked] = useState(0)
+    const address = "0x1234567890123456789012345678901234567890"
   return (
     <div className="relative bg-gray-200 w-full h-screen overflow-hidden text-left text-5xl text-white font-monument-extended">
       {/* <div className="absolute top-[-241px] left-[1366px] w-[1366px] h-[1009px] [transform:_rotate(180deg)] [transform-origin:0_0]" /> */}
@@ -82,62 +85,52 @@ const page: NextPage = () => {
         <div className="absolute left-[750px] top-10">
         <TransactionList />
         </div>
-        <form>
+        <div className="absolute top-[100px] left-[50px] text-white text-lg bg-gray-800 p-6 rounded-xl shadow-md">
+  <div className="grid grid-cols-1 gap-4">
+    <div>
+      <p className="text-gray-400">Total GHO Staked</p>
+      <p className="text-3xl font-bold">{totalGhoStaked}</p>
+    </div>
+    <div>
+      <p className="text-gray-400">Total Claimable GHO</p>
+      <p className="text-3xl font-bold">{totalClaimableGho}</p>
+    </div>
+    <div>
+      <p className="text-gray-400">Claimable Window</p>
+      <p className="text-3xl font-bold">{claimableWindow}</p>
+    </div>
+    <div>
+      <p className="text-gray-400">Volume of Fan Token Traded</p>
+      <p className="text-3xl font-bold">{volumeOfFanTokenTraded}</p>
+    </div>
+  </div>
 
-        <input
-                type="number"
-                name="price"
-                placeholder="Base Price"
-                className="absolute leading-[1.6] top-[404px] left-[66px] w-[353px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
-            />
-            <div>
-            <p className="absolute leading-[1.6] top-[404px] left-[430px] text-lg">
-            GHO
-            </p>    
-            </div> 
-        <input
-                type="text"
-                name="code"
-                placeholder="Token Code"
-                className="absolute top-[221px] left-[223px] w-[317px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
-            /> 
-            <input
-                type="text"
-                name="desc"
-                placeholder="Token Description"
-                className="absolute top-[320px] left-[66px] w-[474px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
-            />        
-            <input
-                    type="text"
-                    name="name"
-                    placeholder="Token Name"
-                    className="absolute top-[159px] left-[223px] w-[317px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
-                />
-                <select placeholder="Duration" className="absolute top-[489px] left-[66px] w-[352px] h-[46px] appearance-none bg-transparent border border-gray-200 text-[#9CA3AF] py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-transparent focus:border-gray-500" id="grid-state">
-                <option>Duration</option>
-                <option>2 Months</option>
-                <option>6 Months</option>
-                </select>
-        </form>
-        
-        <div className="absolute top-[141px] left-[24px] w-[199px] h-[193px] text-center text-[15px]">
-          <div className="absolute top-[0px] left-[32px] rounded-[31px] bg-forestgreen-100 w-[132px] h-[132px]" />
-          <img
-            className="absolute top-[10px] left-[35px] w-[140px] h-[140px] cursor-pointer py-6 rounded-lg 
-            transform transition duration-500 
-            hover:scale-105"
-            alt=""
-            src="/plus.svg"
-          />
-        </div>
-        <div className="absolute top-[497px] left-[483px] w-[76px] h-[72px] transform transition duration-500 
+</div>
+
+
+<div className="absolute top-[435px] left-[60px] h-[100px] w-[160px] transform transition duration-500 
             hover:scale-105">
-          <div className="absolute top-[0px] left-[0px] bg-forestgreen-200 w-[76px] h-[72px]" />
           <img
-            className="absolute top-[15px] left-[17px] rounded-[1px] w-[42px] h-[42px]"
-            alt=""
-            src="/vector-27.svg"
-          />
+          className="h-[120px] w-[160px] top-[40.59%] right-[67.61%] bottom-[56.89%] left-[20.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
+          hover:scale-105"
+          alt=""
+          src="/claim1.svg"
+        //   onClick={() =>
+        //     {  
+        //     }}
+        />
+        </div>
+        <div className="absolute top-[400px] left-[200px] h-[140px] w-[200px] transform transition duration-500 
+            hover:scale-105">
+          <img
+          className="absolute h-[140px] w-[209px] top-[10.59%] right-[67.61%] bottom-[56.89%] left-[20.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
+          hover:scale-105"
+          alt=""
+          src="/terminate.svg"
+        //   onClick={() =>
+        //     {  
+        //     }}
+        />
         </div>
       </div>
     </div>
