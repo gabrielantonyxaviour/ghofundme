@@ -1,4 +1,4 @@
-const { DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS } = require("../../networks")
+const { DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS } = require("../networks")
 task("create-token", "Creating a new fan token using GHOFundMeModule").setAction(async (taskArgs) => {
   const createTokenInputParams = [
     "MINT_TOKEN_NAME",
@@ -15,7 +15,7 @@ task("create-token", "Creating a new fan token using GHOFundMeModule").setAction
   const moduleFactory = await ethers.getContractFactory("GHOFundMeModule")
   const moduleContract = moduleFactory.attach(moduleAddress)
 
-  const tx = await moduleContract.setupModule(createTokenInputParams)
+  const tx = await moduleContract.createToken(createTokenInputParams)
 
   const receipt = await tx.wait(DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS)
 

@@ -1,4 +1,4 @@
-const { networks, DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS } = require("../../networks")
+const { networks, DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS } = require("../networks")
 task("setup-module", "Setting up the GHOFundMeModule contract").setAction(async (taskArgs) => {
   const vaultFactory = networks.sepolia.vaultFactory
   const fanMintToken = networks.polygonMumbai.fanMintToken
