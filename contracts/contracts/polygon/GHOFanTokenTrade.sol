@@ -9,11 +9,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract GhoFanTokenTrade is ERC1155URIStorage, Ownable {
 
     struct Token {
+        uint256 tokenId;
         string name;
         string symbol;
         string uri;
         address creator;
-        uint256 mintPrice;
     }
 
     uint256 private tokenIdCounter;
@@ -29,9 +29,8 @@ contract GhoFanTokenTrade is ERC1155URIStorage, Ownable {
         _transferOwnership(ghoFundMeModule);
     }
 
-    function createToken(string memory name,string memory symbol,string memory uri, address creator, uint256 mintPrice) external onlyOwner returns (uint256) {
-        uint256 tokenId=totalSupply();
-        _tokens[tokenId] = Token(name, symbol, uri, creator, mintPrice);
+    function createToken(string memory name,string memory symbol,string memory uri, address creator,uint256 tokenId) external onlyOwner returns (uint256) {
+        _tokens[tokenId] = Token(tokenId,name, symbol, uri, creator);
         _setURI(tokenId, uri);
         return tokenId;
     }

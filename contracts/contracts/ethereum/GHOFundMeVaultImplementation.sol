@@ -13,7 +13,7 @@ error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used w
 error SourceChainNotAllowlisted(uint64 sourceChainSelector); // Used when the source chain has not been allowlisted by the contract owner.
 error SenderNotAllowlisted(address sender); // Used when the sender has not been allowlisted by the contract owner.
 
-contract ERC4626VaultImplementation is CCIPReceiver{
+contract GHOFundMeVaultImplementation is CCIPReceiver{
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     address public owner;
     bytes private s_lastReceivedData; // Store the last received data.

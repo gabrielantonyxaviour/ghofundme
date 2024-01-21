@@ -7,7 +7,7 @@ import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
-import "../interface/IERC4626Vault.sol";
+import "../interface/IGHOFundMeVault.sol";
 
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -18,7 +18,7 @@ error SenderNotAllowlisted(address sender); // Used when the sender has not been
 
 
 
-contract ERC4626VaultFactory is CCIPReceiver{
+contract GHOFundMeVaultFactory is CCIPReceiver{
     
     struct Vault{
         uint256 fanTokenId;
@@ -143,7 +143,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     ) internal returns (address _vaultAddress) {
         _vaultAddress=_deployProxy(vaultImplementation,_crossChainMessage.creatorLensProfileId);
         vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
-        require(IERC4626Vault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector,GHO_TOKEN_ADDRESS));
+        require(IGHOFundMeVault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector,GHO_TOKEN_ADDRESS));
     }
     
     function _deployProxy(

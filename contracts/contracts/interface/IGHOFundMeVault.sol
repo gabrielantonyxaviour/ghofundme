@@ -2,6 +2,6 @@
 pragma solidity ^0.8.10;
 
 
-interface IERC4626Vault {
+interface IGHOFundMeVault {
     function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector,address rewardTokenAddress) external returns(bool);
 }
