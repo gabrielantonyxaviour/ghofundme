@@ -90,6 +90,7 @@ contract GHOFundMeModule is  FollowValidatorFollowModuleBase, CCIPReceiver {
         allowlistedDestinationChains[SEPOLIA_CHAIN_SELECTOR] = true;
         vaultImplementation=_vaultImplementation;
         s_linkToken = IERC20(_link);
+        owner=msg.sender;
     }
     
     // Events

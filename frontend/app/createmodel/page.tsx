@@ -1,6 +1,6 @@
 "use client";
 import type { NextPage } from "next";
-import { useContractRead, useDisconnect } from "wagmi";
+import { useContractRead, useDisconnect, useNetwork } from "wagmi";
 import { useAccount } from "wagmi";
 import { redirect } from "next/navigation";
 import { use, useEffect, useState } from "react";
@@ -9,6 +9,8 @@ import { LensClient, development } from "@lens-protocol/client";
 import { useContractWrite } from "wagmi";
 import { DEPLOYMENTS, LINK_ABI, MODULE_ABI } from "@/lib/constants";
 import { encodeAbiParameters, parseAbiParameters } from "viem";
+import { parseEther } from "ethers/lib/utils";
+import { createPublicClient, http, createWalletClient, custom } from "viem";
 
 const useAccountData = () => {
   const { address } = useAccount();
@@ -21,17 +23,22 @@ const lensClient = new LensClient({
 
 const page: NextPage = () => {
   const { disconnect } = useDisconnect();
+  const { chain: polygonMumbai } = useNetwork();
   const { isConnecting, isDisconnected } = useAccount();
   const [address, setAddress] = useState("");
   const [profiles, setProfiles] = useState<any>([]);
-  const [mintTokenName, setMintTokenName] = useState("");
-  const [mintTokenSymbol, setMintTokenSymbol] = useState("");
-  const [tradeTokenName, setTradeTokenName] = useState("");
-  const [tradeTokenSymbol, setTradeTokenSymbol] = useState("");
-  const [mintTokenURI, setMintTokenURI] = useState("");
-  const [tradeTokenURI, setTradeTokenURI] = useState("");
-  const [mintPrice, setMintPrice] = useState("");
-  const [minMintAmount, setMinMintAmount] = useState("");
+  const [mintTokenName, setMintTokenName] = useState("Fire");
+  const [mintTokenSymbol, setMintTokenSymbol] = useState("FR");
+  const [tradeTokenName, setTradeTokenName] = useState("Ice");
+  const [tradeTokenSymbol, setTradeTokenSymbol] = useState("IC");
+  const [mintTokenURI, setMintTokenURI] = useState(
+    "https://t3.ftcdn.net/jpg/03/06/79/00/360_F_306790071_mRx9vhBuE2LfdiLy433CMn50XzroRQ34.jpg"
+  );
+  const [tradeTokenURI, setTradeTokenURI] = useState(
+    "https://static6.depositphotos.com/1043073/665/i/450/depositphotos_6651515-stock-photo-water-splash.jpg"
+  );
+  const [mintPrice, setMintPrice] = useState("0.0000000001");
+  const [minMintAmount, setMinMintAmount] = useState("2");
   const [isapproved, setisapproved] = useState(false);
 
   const { writeAsync: createFanToken } = useContractWrite({
@@ -53,28 +60,15 @@ const page: NextPage = () => {
     functionName: "getLatestTokenId",
     args: [],
   });
-  console.log("aaa"+parseAbiParameters("uint, uint, address, uint, uint"));
-  console.log("bbb",tokenIdCounter,profiles && profiles.length > 0 && profiles[0].id,accountAddress as `0x${string}`,mintPrice as any,minMintAmount as any);
-  const { data: fee, refetch: getFee } = useContractRead({
-    address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
-    abi: MODULE_ABI,
-    functionName: "getFee",
-    args: [
-      profiles && profiles.length > 0 && profiles[0].id,
-      DEPLOYMENTS.ethereumSelector,
-      
-      encodeAbiParameters(
-        parseAbiParameters("uint, uint, address, uint, uint"),
-        [
-          tokenIdCounter?tokenIdCounter:"" as any,
-          profiles && profiles.length > 0 && profiles[0].id,
-          accountAddress as `0x${string}`,
-          mintPrice as any,
-          minMintAmount as any,
-        ]
-      ),
-    ],
-  });
+  console.log("aaa" + parseAbiParameters("uint, uint, address, uint, uint"));
+  console.log(
+    "bbb",
+    tokenIdCounter,
+    profiles && profiles.length > 0 && parseInt(profiles[0].id, 16),
+    accountAddress as `0x${string}`,
+    mintPrice as any,
+    minMintAmount as any
+  );
 
   useEffect(() => {
     if (isDisconnected) {
@@ -175,7 +169,7 @@ const page: NextPage = () => {
         <form>
           <div className="absolute top-14">
             <input
-              type="number"
+              type="text"
               name="price"
               placeholder="Mint Price"
               value={mintPrice}
@@ -254,40 +248,110 @@ const page: NextPage = () => {
           />
         </form>
 
-        {/* <div className=" w-[199px] h-[193px] text-center text-[15px]">
-          <div className="absolute flex top-[0px] left-[32px] rounded-[31px] bg-forestgreen-100 w-[132px] h-[132px]" />
-          <p>FUND LINK</p>
-          <img
-            className="absolute top-[10px] left-[35px] w-[140px] h-[140px] cursor-pointer py-6 rounded-lg 
-            transform transition duration-500 
-            hover:scale-105"
-            alt=""
-            src="/plus.svg"
-            onClick={async () => {
-              await getFee();
-              await approveTokens({
-                args: [DEPLOYMENTS.ghoFundMeModule, fee],
-              });
-            }}
-          />
-        </div> */}
         <button
           onClick={async () => {
-            await createFanToken({
-              args: [
+            console.log("DATA");
+            console.log([
+              tokenIdCounter ? tokenIdCounter : ("0" as any),
+              profiles && profiles.length > 0 && parseInt(profiles[0].id, 16),
+              accountAddress != undefined
+                ? (accountAddress as `0x${string}`)
+                : "0x0000000000000000000000000000000000000000",
+              parseEther(
+                mintPrice == undefined || mintPrice.length == 0
+                  ? "0"
+                  : (mintPrice as string)
+              ).toBigInt(),
+              minMintAmount as any,
+            ]);
+            console.log("ACTUAL");
+            console.log([
+              profiles && profiles.length > 0 && parseInt(profiles[0].id, 16),
+              DEPLOYMENTS.ethereumSelector,
+
+              encodeAbiParameters(
+                parseAbiParameters("uint, uint, address, uint, uint"),
                 [
-                  mintTokenName,
-                  tradeTokenName,
-                  mintTokenSymbol,
-                  tradeTokenSymbol,
-                  mintTokenURI,
-                  tradeTokenURI,
-                  profiles && profiles.length > 0 && profiles[0].id,
-                  mintPrice,
-                  minMintAmount,
-                ],
-              ],
+                  tokenIdCounter ? tokenIdCounter : ("0" as any),
+                  profiles &&
+                    profiles.length > 0 &&
+                    parseInt(profiles[0].id, 16),
+                  accountAddress != undefined
+                    ? (accountAddress as `0x${string}`)
+                    : "0x0000000000000000000000000000000000000000",
+                  parseEther(
+                    mintPrice == undefined || mintPrice.length == 0
+                      ? "0"
+                      : (mintPrice as string)
+                  ).toBigInt(),
+                  minMintAmount as any,
+                ]
+              ),
+            ]);
+            let fetchedFee: any;
+            let publicClient = createPublicClient({
+              chain: polygonMumbai,
+              transport: http("https://polygon-mumbai-bor.publicnode.com/"),
             });
+            try {
+              fetchedFee = await publicClient.readContract({
+                address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
+                abi: MODULE_ABI,
+                functionName: "getFee",
+                args: [
+                  profiles &&
+                    profiles.length > 0 &&
+                    parseInt(profiles[0].id, 16),
+                  DEPLOYMENTS.ethereumSelector,
+
+                  encodeAbiParameters(
+                    parseAbiParameters("uint, uint, address, uint, uint"),
+                    [
+                      tokenIdCounter ? tokenIdCounter : ("0" as any),
+                      profiles &&
+                        profiles.length > 0 &&
+                        parseInt(profiles[0].id, 16),
+                      accountAddress != undefined
+                        ? (accountAddress as `0x${string}`)
+                        : "0x0000000000000000000000000000000000000000",
+                      parseEther(
+                        mintPrice == undefined || mintPrice.length == 0
+                          ? "0"
+                          : (mintPrice as string)
+                      ).toBigInt(),
+                      minMintAmount as any,
+                    ]
+                  ),
+                ],
+              });
+              console.log(fetchedFee);
+            } catch (e) {
+              console.log("ERROR");
+              console.log(e);
+            }
+            let walletClient;
+            if (window != undefined) {
+              walletClient = createWalletClient({
+                chain: polygonMumbai,
+                transport: custom(window.ethereum as any),
+              });
+            }
+            const [account] = await walletClient.getAddresses();
+
+            const { request } = await publicClient.simulateContract({
+              address: DEPLOYMENTS.polygonLINK as `0x${string}`,
+              abi: LINK_ABI,
+              functionName: "approve",
+              args: [
+                DEPLOYMENTS.ghoFundMeModule,
+                (
+                  (fetchedFee as bigint) + BigInt("1000000000000000000")
+                ).toString(),
+              ],
+              account,
+            });
+            await walletClient.writeContract(request);
+            setisapproved(true);
           }}
           className="absolute top-[497px] left-[283px] w-[199px] h-[41] transform transition duration-500 
             hover:scale-105"
@@ -300,13 +364,56 @@ const page: NextPage = () => {
           />
         </button>
         <button
-          className={`absolute top-[497px] left-[283px] w-[199px] h-[41] transform ${isapproved?`transition duration-500 hover:scale-105`:`cursor-not-allowed`}`}
+          className={`absolute top-[497px] left-[283px] w-[199px] h-[41] transform ${
+            isapproved
+              ? `transition duration-500 hover:scale-105`
+              : `cursor-not-allowed`
+          }`}
+          onClick={async () => {
+            try {
+              console.log("CREATING");
+              console.log([
+                [
+                  mintTokenName,
+                  tradeTokenName,
+                  mintTokenSymbol,
+                  tradeTokenSymbol,
+                  mintTokenURI,
+                  tradeTokenURI,
+                  profiles &&
+                    profiles.length > 0 &&
+                    parseInt(profiles[0].id, 16),
+                  parseEther(mintPrice).toString(),
+                  minMintAmount,
+                ],
+              ]);
+              await createFanToken({
+                args: [
+                  [
+                    mintTokenName,
+                    tradeTokenName,
+                    mintTokenSymbol,
+                    tradeTokenSymbol,
+                    mintTokenURI,
+                    tradeTokenURI,
+                    profiles &&
+                      profiles.length > 0 &&
+                      parseInt(profiles[0].id, 16),
+                    parseEther(mintPrice),
+                    minMintAmount,
+                  ],
+                ],
+              });
+            } catch (e) {
+              console.log(e);
+            }
+          }}
         >
           <div className="absolute top-[0px] left-[0px] bg-forestgreen-200 w-[199px] h-[41]" />
           <img
             className="absolute top-[15px] left-[257px] rounded-[1px] w-[199px] h-[41]"
             alt=""
-            src={isapproved?`/createactive`:`/createinactive.svg`}
+            src={isapproved ? `/createactive.svg` : `/createinactive.svg`}
           />
         </button>
       </div>
