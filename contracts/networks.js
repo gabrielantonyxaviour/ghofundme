@@ -31,8 +31,6 @@ const networks = {
     chainSelector: "12532609583862916517",
     router: "0x1035CabC275068e0F4b745A29CEDf38E13aF41b1",
     link: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
-    ccipBnM: "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40",
-    ccipLnM: "0xc1c76a8c5bFDE1Be034bbcD930c668726E7C1987",
     module: "0x4e5Fa0C09b7246F13470E5967A5E2A113030277c",
   },
   sepolia: {
@@ -55,4 +53,5 @@ const networks = {
 
 module.exports = {
   networks,
+  DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
 }

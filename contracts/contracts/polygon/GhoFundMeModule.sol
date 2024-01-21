@@ -160,17 +160,14 @@ contract GHOFundMeModule is  FollowValidatorFollowModuleBase, CCIPReceiver {
 
     // GHOFundMeModule Functions
 
-    function setVaultFactory(address _vaultFactory) external onlyOwner{
+    function setupModule(address _vaultFactory,address mintToken,address tradeToken) external onlyOwner{
         require(vaultFactory==address(0),"Already initialized");
-        vaultFactory=_vaultFactory;
-    } 
-
-    function setFanTokens(address mintToken,address tradeToken) external onlyOwner{
         require(mintToken!=address(0),"Invalid mint token");
         require(tradeToken!=address(0),"Invalid trade token");
         require(address(fanMintToken)==address(0)&&address(fanTradeToken)==address(0),"Already initialized");
         fanMintToken=IFanToken(mintToken);
         fanTradeToken=IFanToken(tradeToken);
+        vaultFactory=_vaultFactory;
     }
 
     function createFanToken(CreateTokenInputParams memory params) external {
