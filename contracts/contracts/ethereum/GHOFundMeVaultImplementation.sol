@@ -50,9 +50,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
-    /// @param _link The address of the link contract.
-    constructor(address _router, address _link) CCIPReceiver(_router) {
-        s_linkToken = IERC20(_link);
+    constructor(address _router) CCIPReceiver(_router) {
     }
 
     // Events
@@ -120,13 +118,14 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
 
     /// @notice Initializes the deployed proxy contract
     /// @param creator The address of the creator of the proxy contract
+    /// @param _link The address of the LINK token
     /// @param lensProfileId The lens profile id of the creator
     /// @param moduleAddress The address of the GHOFundMe Module
     /// @param _rewardTokenAddress The address of the reward token
     /// @param _mintPriceInGHO The mint price in GHO
     /// @param _minimumMintAmount The minimum mint amount
     /// @param _chainSelector The chain selector of the source chain. ie. Polygon Mumbai
-    function initialize(address creator, uint256 lensProfileId,address moduleAddress,address _rewardTokenAddress, uint256 _mintPriceInGHO,uint256 _minimumMintAmount,uint256 _claimWindowDuration,uint64 _chainSelector) external returns(bool) {
+    function initialize(address creator,address _link, uint256 lensProfileId,address moduleAddress,address _rewardTokenAddress, uint256 _mintPriceInGHO,uint256 _minimumMintAmount,uint256 _claimWindowDuration,uint64 _chainSelector) external returns(bool) {
         require(owner == address(0), "already initialized");
         owner = creator;
         allowlistedDestinationChains[_chainSelector] = true;
@@ -136,6 +135,8 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         minimumMintAmount = _minimumMintAmount;
         claimWindowDuration=_claimWindowDuration;
         latestClaimWindow=block.timestamp/claimWindowDuration;
+        s_linkToken = IERC20(_link);
+        
         emit OwnershipTransferred(address(0), creator);
         emit Initialized(creator, lensProfileId, moduleAddress, _chainSelector,_rewardTokenAddress);
         return true;
@@ -238,6 +239,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         address _beneficiary,
         address _token
     ) public onlyOwner {
+        require(_token!=rewardTokenAddress,"Cannot withdraw reward token");
         // Retrieve the balance of this contract
         uint256 amount = IERC20(_token).balanceOf(address(this));
 

@@ -65,11 +65,11 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     // Mapping to keep track of allowlisted senders.
     mapping(address => bool) public allowlistedSenders;
 
-    constructor(address _crossChainMessageImplementation,address _router, address _link, uint64 _chainSelector,address _moduleAddress) CCIPReceiver(_router) {
-        vaultImplementation = _crossChainMessageImplementation;
+    constructor(address _vaultImplementation,address _router, address _link,address _moduleAddress) CCIPReceiver(_router) {
+        vaultImplementation = _vaultImplementation;
         s_linkToken = IERC20(_link);
-        allowlistedDestinationChains[_chainSelector] = true;
-        allowlistedSourceChains[_chainSelector] = true;
+        allowlistedDestinationChains[POLYGON_CHAIN_SELECTOR] = true;
+        allowlistedSourceChains[POLYGON_CHAIN_SELECTOR] = true;
         allowlistedSenders[_moduleAddress]=true;
         moduleAddress=_moduleAddress;
         owner=msg.sender;

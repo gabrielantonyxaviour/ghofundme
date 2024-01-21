@@ -23,7 +23,7 @@ error SourceChainNotAllowlisted(uint64 sourceChainSelector); // Used when the so
 error SenderNotAllowlisted(address sender); // Used when the sender has not been allowlisted by the contract owner.
 
 
-contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver {
+contract GHOFundMeModule is  FollowValidatorFollowModuleBase, CCIPReceiver {
     struct CreateTokenInputParams{
         string fanMintTokenName;
         string fanTradeTokenName;
