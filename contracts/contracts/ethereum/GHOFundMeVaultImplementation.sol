@@ -5,6 +5,8 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import "../interface/IGHOFundMeVaultFactory.sol";
 
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -13,11 +15,12 @@ error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used w
 error SourceChainNotAllowlisted(uint64 sourceChainSelector); // Used when the source chain has not been allowlisted by the contract owner.
 error SenderNotAllowlisted(address sender); // Used when the sender has not been allowlisted by the contract owner.
 
-contract ERC4626VaultImplementation is CCIPReceiver{
+contract GHOFundMeVaultImplementation is CCIPReceiver{
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     address public owner;
     bytes private s_lastReceivedData; // Store the last received data.
     address public rewardTokenAddress;
+    IGHOFundMeVaultFactory public vaultFactory;
 
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedDestinationChains;
@@ -36,12 +39,14 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     // Chain Selector for Mumbai
     uint64 public POLYGON_CHAIN_SELECTOR=12532609583862916517;
 
+    uint256 public mintPriceInGHO;
+    uint256 public minimumMintAmount;
     mapping(address => uint256) public userTotalLockedFunds;
     // mapping(address => )
     uint256 public totalLockedFunds;
     uint256 public totalClaimmableFunds;
-    uint256 public lastClaimedTimestamp;
-
+    uint256 public latestClaimWindow;
+    uint256 public claimWindowDuration;
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
@@ -76,7 +81,7 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     // Event emitted when the contract is initialized.
     event Initialized(address indexed creator, uint256 indexed lensProfileId, address indexed moduleAddress, uint64 chainSelector,address rewardTokenAddress);
 
-
+    event SubscriptionInitiated(bytes32 indexed _messageId,address indexed subscriber,uint256 indexed lensProfileId,uint256 amountInGHO,uint256 totalFanTokensMinted);
     // Modifers
 
     /// @dev Modifier that checks if the sender is the owner of the contract.
@@ -84,7 +89,7 @@ contract ERC4626VaultImplementation is CCIPReceiver{
         require(msg.sender == owner, "Ownable: caller is not the owner");
         _;
     }
-    
+
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
     modifier onlyAllowlistedDestinationChain(uint64 _destinationChainSelector) {
@@ -117,26 +122,52 @@ contract ERC4626VaultImplementation is CCIPReceiver{
     /// @param creator The address of the creator of the proxy contract
     /// @param lensProfileId The lens profile id of the creator
     /// @param moduleAddress The address of the GHOFundMe Module
-    /// @param chainSelector The chain selector of the chain where the GHOFundMe Module is deployed ie. Polygon 
-    function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector,address _rewardTokenAddress) external returns(bool) {
+    /// @param _rewardTokenAddress The address of the reward token
+    /// @param _mintPriceInGHO The mint price in GHO
+    /// @param _minimumMintAmount The minimum mint amount
+    /// @param _chainSelector The chain selector of the source chain. ie. Polygon Mumbai
+    function initialize(address creator, uint256 lensProfileId,address moduleAddress,address _rewardTokenAddress, uint256 _mintPriceInGHO,uint256 _minimumMintAmount,uint256 _claimWindowDuration,uint64 _chainSelector) external returns(bool) {
         require(owner == address(0), "already initialized");
         owner = creator;
-        allowlistedDestinationChains[chainSelector] = true;
-        allowlistedSourceChains[chainSelector] = true;
+        allowlistedDestinationChains[_chainSelector] = true;
+        allowlistedSourceChains[_chainSelector] = true;
         rewardTokenAddress = _rewardTokenAddress;
+        mintPriceInGHO = _mintPriceInGHO;
+        minimumMintAmount = _minimumMintAmount;
+        claimWindowDuration=_claimWindowDuration;
+        latestClaimWindow=block.timestamp/claimWindowDuration;
         emit OwnershipTransferred(address(0), creator);
-        emit Initialized(creator, lensProfileId, moduleAddress, chainSelector,_rewardTokenAddress);
+        emit Initialized(creator, lensProfileId, moduleAddress, _chainSelector,_rewardTokenAddress);
         return true;
     }
 
-    function _lockFundsByModule(address _fan,uint256 _amount) internal {
-        IERC20(rewardTokenAddress).transferFrom(_fan, address(this), _amount);
+    function testPermit(address _token,uint256 amountInGHO,uint256 deadline,uint8 v,bytes32 r,bytes32 s) external {
+        IERC20Permit(_token).permit(msg.sender, address(this), amountInGHO, deadline, v, r, s);
+        IERC20(_token).transferFrom(msg.sender, address(this), amountInGHO);
     }
 
-    function _lockFundsByUser(address _fan,uint256 _amount) internal {
-        IERC20(rewardTokenAddress).transferFrom(_fan, address(this), _amount);
+    function subscribe(uint256 lensProfileId, uint256 amountInGHO,uint256 deadline,uint8 v,bytes32 r,bytes32 s) external {
+        require(lensProfileId!=0,"Lens Profile Id cannot be 0");
+        require(amountInGHO>=minimumMintAmount,"Amount is less than minimum mint amount");
+
+        IERC20Permit(rewardTokenAddress).permit(msg.sender, address(this), amountInGHO, deadline, v, r, s);
+        IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amountInGHO);
+
+        uint256 _totalMintAmount=amountInGHO/mintPriceInGHO;
+
+        bytes memory _data=abi.encode(lensProfileId,_totalMintAmount,msg.sender);
+
+        uint256 _fee=vaultFactory.getFee(POLYGON_CHAIN_SELECTOR,_data);
+
+        require(s_linkToken.balanceOf(address(this))>=_fee,"Not enough LINK Balance");
+
+        s_linkToken.transferFrom(address(this),address(vaultFactory),_fee);
+        
+        bytes32 _messageId=vaultFactory.subscribe(POLYGON_CHAIN_SELECTOR,_data);
+
+        emit SubscriptionInitiated(_messageId, msg.sender, lensProfileId, amountInGHO, _totalMintAmount);
     }
-    
+
     // Chainlink CCIP functions
 
     /// handle a received message

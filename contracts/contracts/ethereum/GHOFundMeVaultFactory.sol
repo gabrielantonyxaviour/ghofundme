@@ -7,7 +7,7 @@ import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
-import "../interface/IERC4626Vault.sol";
+import "../interface/IGHOFundMeVault.sol";
 
 error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -18,7 +18,7 @@ error SenderNotAllowlisted(address sender); // Used when the sender has not been
 
 
 
-contract ERC4626VaultFactory is CCIPReceiver{
+contract GHOFundMeVaultFactory is CCIPReceiver{
     
     struct Vault{
         uint256 fanTokenId;
@@ -27,16 +27,20 @@ contract ERC4626VaultFactory is CCIPReceiver{
         address vaultAddress;
         address creator;
         uint64 sourceChainSelector;
+        bool exists;
     }
 
     struct CrosschainMessage{
         uint256 fanTokenId;
         uint256 creatorLensProfileId;
         address creatorAddress;
+        uint256 mintPriceInGHO;
+        uint256 minimumMintAmount;
     }   
 
     address public vaultImplementation;
     address public owner;
+    address public moduleAddress;
     mapping(address => Vault) private vaults;
 
     IERC20 private s_linkToken;
@@ -67,6 +71,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
         allowlistedDestinationChains[_chainSelector] = true;
         allowlistedSourceChains[_chainSelector] = true;
         allowlistedSenders[_moduleAddress]=true;
+        moduleAddress=_moduleAddress;
         owner=msg.sender;
         emit OwnershipTransferred(address(0), owner);
     }
@@ -100,6 +105,12 @@ contract ERC4626VaultFactory is CCIPReceiver{
         require(msg.sender == owner, "Ownable: caller is not the owner");
         _;
     }
+
+    modifier onlyVault()
+    {
+        require(vaults[msg.sender].exists,"Vault not deployed");
+        _;
+    }
     
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
@@ -131,6 +142,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     /// @param _moduleAddress The address of the module to be allowlisted.
     function addModuleAddress(address _moduleAddress) public onlyOwner{
         allowlistedSenders[_moduleAddress]=true;
+        moduleAddress=_moduleAddress;
     }
 
     // Contract Functions
@@ -141,9 +153,9 @@ contract ERC4626VaultFactory is CCIPReceiver{
         address _moduleAddress,
         uint64 _chainSelector
     ) internal returns (address _vaultAddress) {
-        _vaultAddress=_deployProxy(vaultImplementation,uint256(uint160(_crossChainMessage.creatorAddress)));
-        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
-        require(IERC4626Vault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector,GHO_TOKEN_ADDRESS));
+        _vaultAddress=_deployProxy(vaultImplementation,_crossChainMessage.creatorLensProfileId);
+        vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector,true);
+        require(IGHOFundMeVault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, GHO_TOKEN_ADDRESS,_crossChainMessage.mintPriceInGHO,_crossChainMessage.minimumMintAmount,_chainSelector));
     }
     
     function _deployProxy(
@@ -173,6 +185,11 @@ contract ERC4626VaultFactory is CCIPReceiver{
             );
     }
 
+    function subscribe(uint64 _destinationChainSelector,bytes memory _data) external onlyVault returns(bytes32) {
+        return _sendMessagePayLINK(_destinationChainSelector, moduleAddress, _data);
+    }
+
+
     // Chainlink CCIP functions
 
     // @notice Sends data to receiver on the destination chain.
@@ -185,7 +202,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     function _sendMessagePayLINK(
         uint64 _destinationChainSelector,
         address _receiver,
-        bytes calldata _data
+        bytes memory _data
     )
         internal
         returns (bytes32 messageId)
@@ -234,7 +251,7 @@ contract ERC4626VaultFactory is CCIPReceiver{
     /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
     function _buildCCIPMessage(
         address _receiver,
-        bytes calldata _data,
+        bytes memory _data,
         address _feeTokenAddress
     ) internal pure returns (Client.EVM2AnyMessage memory) {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
@@ -265,7 +282,9 @@ contract ERC4626VaultFactory is CCIPReceiver{
     {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
-        address _deployedVault=_deployVault(abi.decode(any2EvmMessage.data, (CrosschainMessage)),abi.decode(any2EvmMessage.sender, (address)),any2EvmMessage.sourceChainSelector);
+        CrosschainMessage memory _crosschainMessage=abi.decode(any2EvmMessage.data, (CrosschainMessage));
+        address _moduleAddress=abi.decode(any2EvmMessage.sender, (address));
+        address _deployedVault=_deployVault(_crosschainMessage,_moduleAddress,any2EvmMessage.sourceChainSelector);
         emit VaultDeployed(_deployedVault);
         emit MessageReceived(
             any2EvmMessage.messageId,
@@ -273,6 +292,22 @@ contract ERC4626VaultFactory is CCIPReceiver{
             abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
             any2EvmMessage.data
         );
+    }
+
+    function getFee(uint64 _destinationChainSelector,bytes memory _data) external view returns(uint256)
+    {
+        return _getFee(_destinationChainSelector, _data);
+    }
+
+    function _getFee(uint64 _destinationChainSelector,bytes memory _data) internal view returns(uint256)
+    {
+        IRouterClient router = IRouterClient(this.getRouter());
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            moduleAddress,
+            _data,
+            address(s_linkToken)
+        );
+        return router.getFee(_destinationChainSelector, evm2AnyMessage);
     }
 
     /// @notice Fetches the details of the last received message.
@@ -328,13 +363,5 @@ contract ERC4626VaultFactory is CCIPReceiver{
 
         IERC20(_token).transfer(_beneficiary, amount);
     }
-
-
-
-
-
-
-    
-
 
 }
