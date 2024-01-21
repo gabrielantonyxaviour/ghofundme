@@ -150,8 +150,9 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     function subscribe(uint256 lensProfileId, uint256 amountInGHO,uint256 deadline,uint8 v,bytes32 r,bytes32 s) external {
         require(lensProfileId!=0,"Lens Profile Id cannot be 0");
         require(amountInGHO>=minimumMintAmount,"Amount is less than minimum mint amount");
-
-        IERC20Permit(rewardTokenAddress).permit(msg.sender, address(this), amountInGHO, deadline, v, r, s);
+        if(IERC20(rewardTokenAddress).allowance(msg.sender,address(this))<amountInGHO){
+            IERC20Permit(rewardTokenAddress).permit(msg.sender, address(this), amountInGHO, deadline, v, r, s);
+        }
         IERC20(rewardTokenAddress).transferFrom(msg.sender, address(this), amountInGHO);
 
         uint256 _totalMintAmount=amountInGHO/mintPriceInGHO;

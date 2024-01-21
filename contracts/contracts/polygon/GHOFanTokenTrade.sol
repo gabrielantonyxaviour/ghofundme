@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GhoFanTokenTrade is ERC1155URIStorage, Ownable {
+contract GHOFanTokenTrade is ERC1155URIStorage, Ownable {
 
     struct Token {
         uint256 tokenId;
