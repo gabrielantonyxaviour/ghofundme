@@ -32,6 +32,8 @@ const networks = {
     router: "0x1035CabC275068e0F4b745A29CEDf38E13aF41b1",
     link: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
     module: "0x9CFf54892D803e08123ba17f90AD78E398646218",
+    mintToken: "0x6d243899d3703C1dBcb97D4428d21FCE5E7d90a5",
+    tradeToken: "0x2625348d24d7A362bF5Fba2832F9fCE741927878",
   },
   sepolia: {
     url: process.env.SEPOLIA_RPC_URL || "UNSET",
