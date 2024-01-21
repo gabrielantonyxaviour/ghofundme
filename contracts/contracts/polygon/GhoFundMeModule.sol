@@ -202,12 +202,12 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         require(fanMintToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
         require(fanTradeToken.balanceOf(msg.sender,accounts[_lensProfileId].tokenId)>=_tokenAmount,"Invalid token amount");
 
-        s_linkToken.transferFrom(msg.sender, address(this), _tokenAmount);
         fanMintToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
         fanTradeToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
         bytes memory _data=abi.encode(_lensProfileId,_tokenAmount,msg.sender);
         uint256 _fee=_getFee(_lensProfileId,SEPOLIA_CHAIN_SELECTOR,_data);
         require(s_linkToken.allowance(msg.sender, address(this))>=_fee,"approve LINK for cross chain"); 
+        s_linkToken.transferFrom(msg.sender, address(this), _tokenAmount);
         
         bytes32 _messageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, accounts[_lensProfileId].vaultAddress,_data);
 
