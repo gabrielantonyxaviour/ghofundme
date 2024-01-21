@@ -36,11 +36,14 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     // Chain Selector for Mumbai
     uint64 public POLYGON_CHAIN_SELECTOR=12532609583862916517;
 
+    uint256 public mintPriceInGHO;
+    uint256 public minimumMintAmount;
     mapping(address => uint256) public userTotalLockedFunds;
     // mapping(address => )
     uint256 public totalLockedFunds;
     uint256 public totalClaimmableFunds;
     uint256 public lastClaimedTimestamp;
+
 
 
     /// @notice Constructor initializes the contract with the router address.
@@ -117,15 +120,20 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
     /// @param creator The address of the creator of the proxy contract
     /// @param lensProfileId The lens profile id of the creator
     /// @param moduleAddress The address of the GHOFundMe Module
-    /// @param chainSelector The chain selector of the chain where the GHOFundMe Module is deployed ie. Polygon 
-    function initialize(address creator, uint256 lensProfileId,address moduleAddress,uint64 chainSelector,address _rewardTokenAddress) external returns(bool) {
+    /// @param _rewardTokenAddress The address of the reward token
+    /// @param _mintPriceInGHO The mint price in GHO
+    /// @param _minimumMintAmount The minimum mint amount
+    /// @param _chainSelector The chain selector of the source chain. ie. Polygon Mumbai
+    function initialize(address creator, uint256 lensProfileId,address moduleAddress,address _rewardTokenAddress, uint256 _mintPriceInGHO,uint256 _minimumMintAmount,uint64 _chainSelector) external returns(bool) {
         require(owner == address(0), "already initialized");
         owner = creator;
-        allowlistedDestinationChains[chainSelector] = true;
-        allowlistedSourceChains[chainSelector] = true;
+        allowlistedDestinationChains[_chainSelector] = true;
+        allowlistedSourceChains[_chainSelector] = true;
         rewardTokenAddress = _rewardTokenAddress;
+        mintPriceInGHO = _mintPriceInGHO;
+        minimumMintAmount = _minimumMintAmount;
         emit OwnershipTransferred(address(0), creator);
-        emit Initialized(creator, lensProfileId, moduleAddress, chainSelector,_rewardTokenAddress);
+        emit Initialized(creator, lensProfileId, moduleAddress, _chainSelector,_rewardTokenAddress);
         return true;
     }
 

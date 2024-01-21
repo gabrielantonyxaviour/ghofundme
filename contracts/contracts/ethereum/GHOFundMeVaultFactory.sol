@@ -33,6 +33,8 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
         uint256 fanTokenId;
         uint256 creatorLensProfileId;
         address creatorAddress;
+        uint256 mintPriceInGHO;
+        uint256 minimumMintAmount;
     }   
 
     address public vaultImplementation;
@@ -143,7 +145,7 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     ) internal returns (address _vaultAddress) {
         _vaultAddress=_deployProxy(vaultImplementation,_crossChainMessage.creatorLensProfileId);
         vaults[_crossChainMessage.creatorAddress] = Vault(_crossChainMessage.fanTokenId,_crossChainMessage.creatorLensProfileId,_moduleAddress,_vaultAddress,_crossChainMessage.creatorAddress,_chainSelector);
-        require(IGHOFundMeVault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, _chainSelector,GHO_TOKEN_ADDRESS));
+        require(IGHOFundMeVault(_vaultAddress).initialize(_crossChainMessage.creatorAddress, _crossChainMessage.creatorLensProfileId, _moduleAddress, GHO_TOKEN_ADDRESS,_crossChainMessage.mintPriceInGHO,_crossChainMessage.minimumMintAmount,_chainSelector));
     }
     
     function _deployProxy(

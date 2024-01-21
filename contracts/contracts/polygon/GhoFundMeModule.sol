@@ -44,6 +44,14 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         bool exists;
     }
 
+    struct CrosschainMessage{
+        uint256 fanTokenId;
+        uint256 creatorLensProfileId;
+        address creatorAddress;
+        uint256 mintPriceInGHO;
+        uint256 minimumMintAmount;
+    }   
+
     // address of Lens Hub in Mumbai Testnet
     address public constant LENS_HUB=0x4fbffF20302F3326B20052ab9C217C44F6480900;
 
@@ -164,7 +172,9 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         require(vaultFactory!=address(0),"vault factory not set");
 
         address _vaultAddress=getVaultAddress(params.lensProfileId);
-        bytes memory _data=abi.encode(_tokenIdCounter,params.lensProfileId,msg.sender,params.mintPriceInGHO,params.minimumMintAmount);
+        CrosschainMessage memory _message=CrosschainMessage(_tokenIdCounter,params.lensProfileId,msg.sender,params.mintPriceInGHO,params.minimumMintAmount);
+
+        bytes memory _data=abi.encode(_message);
         bytes32 _crosschainMessageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, vaultFactory, _data);
         accounts[_tokenIdCounter]=GHOFundMeAccount(params.lensProfileId,_tokenIdCounter,msg.sender,_vaultAddress,_crosschainMessageId,true);
 
