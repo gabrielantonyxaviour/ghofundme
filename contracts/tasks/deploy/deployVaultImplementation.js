@@ -6,7 +6,9 @@ task("deploy-implementation", "Deploys the GHOFundMeVaultImplementation contract
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
-
+    if (network.name != "sepolia") {
+      throw Error("Vault should be deployed to sepolia")
+    }
     const implementationFactory = await ethers.getContractFactory("GHOFundMeVaultImplementation")
     const implementation = await implementationFactory.deploy(networks[network.name].router)
 
@@ -15,6 +17,8 @@ task("deploy-implementation", "Deploys the GHOFundMeVaultImplementation contract
     await implementation.deployTransaction.wait(networks[network.name])
 
     console.log("\nDeployed GHOFundMeVaultImplementation contract to:", implementation.address)
+
+    networks[network.name].implementation = implementation.address
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -31,15 +35,7 @@ task("deploy-implementation", "Deploys the GHOFundMeVaultImplementation contract
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: implementation.address,
-          constructorArguments: [
-            sourceCode,
-            linkTokenAddress,
-            ccipRouterAddress,
-            functionsRouter,
-            donId,
-            chainSelector,
-            subId,
-          ],
+          constructorArguments: [networks[network.name].router],
         })
         console.log("Contract verified")
       } catch (error) {

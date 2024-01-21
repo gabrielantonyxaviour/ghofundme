@@ -239,6 +239,7 @@ contract GHOFundMeVaultImplementation is CCIPReceiver{
         address _beneficiary,
         address _token
     ) public onlyOwner {
+        require(_token!=rewardTokenAddress,"Cannot withdraw reward token");
         // Retrieve the balance of this contract
         uint256 amount = IERC20(_token).balanceOf(address(this));
 

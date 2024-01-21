@@ -33,6 +33,7 @@ const networks = {
     link: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
     ccipBnM: "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40",
     ccipLnM: "0xc1c76a8c5bFDE1Be034bbcD930c668726E7C1987",
+    module: "0x4e5Fa0C09b7246F13470E5967A5E2A113030277c",
   },
   sepolia: {
     url: process.env.SEPOLIA_RPC_URL || "UNSET",
@@ -48,6 +49,7 @@ const networks = {
     link: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
     ccipBnM: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
     ccipLnM: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1",
+    implementation: "0x826dF7f9fEe3760321371d46a5a744bB2fcA4aef",
   },
 }
 
