@@ -32,6 +32,7 @@ const page: NextPage = () => {
   const [tradeTokenURI, setTradeTokenURI] = useState("");
   const [mintPrice, setMintPrice] = useState("");
   const [minMintAmount, setMinMintAmount] = useState("");
+  const [isapproved, setisapproved] = useState(false);
 
   const { writeAsync: createFanToken } = useContractWrite({
     address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
@@ -155,7 +156,7 @@ const page: NextPage = () => {
           )}
         </div>
         <img
-          className="absolute h-[121px] w-[181px] top-[80.59%] right-[67.61%] bottom-[56.89%] left-[70.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
+          className="absolute h-[121px] w-[181px] top-[80.59%] right-[67.61%] bottom-[56.89%] left-[35.17%] max-w-full overflow-hidden max-h-full transform transition duration-500 
           hover:scale-105"
           alt=""
           src="/logoutbutton.svg"
@@ -253,10 +254,10 @@ const page: NextPage = () => {
           />
         </form>
 
-        <div className=" w-[199px] h-[193px] text-center text-[15px]">
+        {/* <div className=" w-[199px] h-[193px] text-center text-[15px]">
           <div className="absolute flex top-[0px] left-[32px] rounded-[31px] bg-forestgreen-100 w-[132px] h-[132px]" />
           <p>FUND LINK</p>
-          {/* <img
+          <img
             className="absolute top-[10px] left-[35px] w-[140px] h-[140px] cursor-pointer py-6 rounded-lg 
             transform transition duration-500 
             hover:scale-105"
@@ -268,8 +269,8 @@ const page: NextPage = () => {
                 args: [DEPLOYMENTS.ghoFundMeModule, fee],
               });
             }}
-          /> */}
-        </div>
+          />
+        </div> */}
         <button
           onClick={async () => {
             await createFanToken({
@@ -288,7 +289,7 @@ const page: NextPage = () => {
               ],
             });
           }}
-          className="absolute top-[497px] left-[483px] w-[199px] h-[41] transform transition duration-500 
+          className="absolute top-[497px] left-[283px] w-[199px] h-[41] transform transition duration-500 
             hover:scale-105"
         >
           <div className="absolute top-[0px] left-[0px] bg-forestgreen-200 w-[199px] h-[41]" />
@@ -296,6 +297,16 @@ const page: NextPage = () => {
             className="absolute top-[15px] left-[17px] rounded-[1px] w-[199px] h-[41]"
             alt=""
             src="/approve.svg"
+          />
+        </button>
+        <button
+          className={`absolute top-[497px] left-[283px] w-[199px] h-[41] transform ${isapproved?`transition duration-500 hover:scale-105`:`cursor-not-allowed`}`}
+        >
+          <div className="absolute top-[0px] left-[0px] bg-forestgreen-200 w-[199px] h-[41]" />
+          <img
+            className="absolute top-[15px] left-[257px] rounded-[1px] w-[199px] h-[41]"
+            alt=""
+            src={isapproved?`/createactive`:`/createinactive.svg`}
           />
         </button>
       </div>
