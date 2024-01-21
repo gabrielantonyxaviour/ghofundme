@@ -202,9 +202,6 @@ contract GHOFundMeModule is  FollowValidatorFollowModuleBase, CCIPReceiver {
         fanMintToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
         fanTradeToken.burnToken(accounts[_lensProfileId].tokenId, _tokenAmount, msg.sender);
         bytes memory _data=abi.encode(_lensProfileId,_tokenAmount,msg.sender);
-        uint256 _fee=_getFee(_lensProfileId,SEPOLIA_CHAIN_SELECTOR,_data);
-        require(s_linkToken.allowance(msg.sender, address(this))>=_fee,"approve LINK for cross chain"); 
-        s_linkToken.transferFrom(msg.sender, address(this), _tokenAmount);
         
         bytes32 _messageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, accounts[_lensProfileId].vaultAddress,_data);
 
@@ -445,6 +442,11 @@ contract GHOFundMeModule is  FollowValidatorFollowModuleBase, CCIPReceiver {
         if (amount == 0) revert NothingToWithdraw();
 
         IERC20(_token).transfer(_beneficiary, amount);
+    }
+
+    function getLatestTokenId() external view returns(uint256)
+    {
+        return _tokenIdCounter;
     }
 
 }

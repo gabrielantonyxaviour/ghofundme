@@ -1,11 +1,14 @@
 "use client";
 import type { NextPage } from "next";
-import { useDisconnect } from "wagmi";
+import { useContractRead, useDisconnect } from "wagmi";
 import { useAccount } from "wagmi";
 import { redirect } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { useProfiles } from "@lens-protocol/react-web";
 import { LensClient, development } from "@lens-protocol/client";
+import { useContractWrite } from "wagmi";
+import { DEPLOYMENTS, LINK_ABI, MODULE_ABI } from "@/lib/constants";
+import { encodeAbiParameters, parseAbiParameters } from "viem";
 
 const useAccountData = () => {
   const { address } = useAccount();
@@ -21,6 +24,53 @@ const page: NextPage = () => {
   const { isConnecting, isDisconnected } = useAccount();
   const [address, setAddress] = useState("");
   const [profiles, setProfiles] = useState<any>([]);
+  const [mintTokenName, setMintTokenName] = useState("");
+  const [mintTokenSymbol, setMintTokenSymbol] = useState("");
+  const [tradeTokenName, setTradeTokenName] = useState("");
+  const [tradeTokenSymbol, setTradeTokenSymbol] = useState("");
+  const [mintTokenURI, setMintTokenURI] = useState("");
+  const [tradeTokenURI, setTradeTokenURI] = useState("");
+  const [mintPrice, setMintPrice] = useState("");
+  const [minMintAmount, setMinMintAmount] = useState("");
+
+  const { writeAsync: createFanToken } = useContractWrite({
+    address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
+    functionName: "createFanToken",
+    abi: MODULE_ABI,
+  });
+  // Fetch account data using the custom hook
+  const { address: accountAddress } = useAccountData();
+  const { writeAsync: approveTokens } = useContractWrite({
+    address: DEPLOYMENTS.polygonLINK as `0x${string}`,
+    abi: LINK_ABI,
+    functionName: "approve",
+  });
+
+  const { data: tokenIdCounter } = useContractRead({
+    address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
+    abi: MODULE_ABI,
+    functionName: "getLatestTokenId",
+    args: [],
+  });
+  const { data: fee, refetch: getFee } = useContractRead({
+    address: DEPLOYMENTS.ghoFundMeModule as `0x${string}`,
+    abi: MODULE_ABI,
+    functionName: "getFee",
+    args: [
+      profiles && profiles.length > 0 && profiles[0].id,
+      DEPLOYMENTS.ethereumSelector,
+      encodeAbiParameters(
+        parseAbiParameters("uint, uint, address, uint, uint"),
+        [
+          tokenIdCounter as any,
+          profiles && profiles.length > 0 && profiles[0].id,
+          accountAddress as `0x${string}`,
+          mintPrice as any,
+          minMintAmount as any,
+        ]
+      ),
+    ],
+  });
 
   useEffect(() => {
     if (isDisconnected) {
@@ -29,9 +79,6 @@ const page: NextPage = () => {
   }, [isDisconnected]);
 
   useEffect(() => {}, []);
-
-  // Fetch account data using the custom hook
-  const { address: accountAddress } = useAccountData();
 
   useEffect(() => {
     if (accountAddress) {
@@ -127,6 +174,10 @@ const page: NextPage = () => {
               type="number"
               name="price"
               placeholder="Mint Price"
+              value={mintPrice}
+              onChange={(e) => {
+                setMintPrice(e.target.value);
+              }}
               className="absolute leading-[1.6] top-[404px] left-[66px] w-[353px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
             />
             <div>
@@ -140,12 +191,16 @@ const page: NextPage = () => {
               type="text"
               name="mtname"
               placeholder="Mint Token Name"
+              value={mintTokenName}
+              onChange={(e) => setMintTokenName(e.target.value)}
               className="absolute top-[159px] left-[66px] w-[317px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
             />
             <input
               type="text"
               name="mtsymbol"
               placeholder="Mint Token Symbol"
+              value={mintTokenSymbol}
+              onChange={(e) => setMintTokenSymbol(e.target.value)}
               className="absolute top-[221px] left-[66px] w-[317px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
             />
           </div>
@@ -154,12 +209,16 @@ const page: NextPage = () => {
               type="text"
               name="ttname"
               placeholder="Trade Token Name"
+              value={tradeTokenName}
+              onChange={(e) => setTradeTokenName(e.target.value)}
               className="absolute top-[159px] left-[303px] w-[330px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
             />
             <input
               type="text"
               name="ttsymbol"
               placeholder="Trade Token Symbol"
+              value={tradeTokenSymbol}
+              onChange={(e) => setTradeTokenSymbol(e.target.value)}
               className="absolute top-[221px] left-[303px] w-[330px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
             />
           </div>
@@ -167,33 +226,65 @@ const page: NextPage = () => {
             type="url"
             name="mintTokenURI"
             placeholder=" Mint Token URI"
+            value={mintTokenURI}
+            onChange={(e) => setMintTokenURI(e.target.value)}
             className="absolute top-[280px] left-[66px] w-[574px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
           />
           <input
             type="url"
             name="tradeTokenURI"
             placeholder="Trade Token URI"
+            value={tradeTokenURI}
+            onChange={(e) => setTradeTokenURI(e.target.value)}
             className="absolute top-[340px] left-[66px] w-[574px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
           />
           <input
             type="number"
             name="desc"
             placeholder=" Minimum Mint Amount"
+            value={minMintAmount}
+            onChange={(e) => {
+              setMinMintAmount(e.target.value);
+            }}
             className="absolute top-[400px] left-[66px] w-[574px] h-8 px-4 py-2 border-b-2 border-white outline-none  focus:white bg-transparent"
           />
         </form>
 
-        {/* <div className="absolute top-[141px] left-[24px] w-[199px] h-[193px] text-center text-[15px]">
-          <div className="absolute top-[0px] left-[32px] rounded-[31px] bg-forestgreen-100 w-[132px] h-[132px]" />
+        <div className=" w-[199px] h-[193px] text-center text-[15px]">
+          <div className="absolute flex top-[0px] left-[32px] rounded-[31px] bg-forestgreen-100 w-[132px] h-[132px]" />
+          <p>FUND LINK</p>
           <img
             className="absolute top-[10px] left-[35px] w-[140px] h-[140px] cursor-pointer py-6 rounded-lg 
             transform transition duration-500 
             hover:scale-105"
             alt=""
             src="/plus.svg"
+            onClick={async () => {
+              await getFee();
+              await approveTokens({
+                args: [DEPLOYMENTS.ghoFundMeModule, fee],
+              });
+            }}
           />
-        </div> */}
-        <div
+        </div>
+        <button
+          onClick={async () => {
+            await createFanToken({
+              args: [
+                [
+                  mintTokenName,
+                  tradeTokenName,
+                  mintTokenSymbol,
+                  tradeTokenSymbol,
+                  mintTokenURI,
+                  tradeTokenURI,
+                  profiles && profiles.length > 0 && profiles[0].id,
+                  mintPrice,
+                  minMintAmount,
+                ],
+              ],
+            });
+          }}
           className="absolute top-[497px] left-[483px] w-[199px] h-[41] transform transition duration-500 
             hover:scale-105"
         >
@@ -203,7 +294,7 @@ const page: NextPage = () => {
             alt=""
             src="/approve.svg"
           />
-        </div>
+        </button>
       </div>
     </div>
   );
