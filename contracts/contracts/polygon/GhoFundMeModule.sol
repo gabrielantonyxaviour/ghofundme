@@ -50,7 +50,7 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         address creatorAddress;
         uint256 mintPriceInGHO;
         uint256 minimumMintAmount;
-    }   
+    } 
 
     // address of Lens Hub in Mumbai Testnet
     address public constant LENS_HUB=0x4fbffF20302F3326B20052ab9C217C44F6480900;
@@ -118,6 +118,9 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
     // Event emitted when a new fan token is created
     event FanTokenCreated(bytes32 indexed messageId,address vaultAddress,uint256 tokenId,uint256 lensProfileId,address creator);
 
+    // Event emitted when a fan token is minted
+    event MintedFanToken(uint256 lensProfileId,uint256 tokenId,uint256 amount,address subscriber);
+
     // Modifers
 
     /// @dev Modifier that checks if the sender is the owner of the contract.
@@ -159,7 +162,7 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         vaultFactory=_vaultFactory;
     } 
 
-    function setFanTokenes(address mintToken,address tradeToken) external onlyOwner{
+    function setFanTokens(address mintToken,address tradeToken) external onlyOwner{
         require(mintToken!=address(0),"Invalid mint token");
         require(tradeToken!=address(0),"Invalid trade token");
         require(address(fanMintToken)==address(0)&&address(fanTradeToken)==address(0),"Already initialized");
@@ -176,7 +179,7 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
 
         bytes memory _data=abi.encode(_message);
         bytes32 _crosschainMessageId=_sendMessagePayLINK(SEPOLIA_CHAIN_SELECTOR, vaultFactory, _data);
-        accounts[_tokenIdCounter]=GHOFundMeAccount(params.lensProfileId,_tokenIdCounter,msg.sender,_vaultAddress,_crosschainMessageId,true);
+        accounts[params.lensProfileId]=GHOFundMeAccount(params.lensProfileId,_tokenIdCounter,msg.sender,_vaultAddress,_crosschainMessageId,true);
 
         fanMintToken.createToken(params.fanMintTokenName, params.fanMintTokenSymbol, params.mintTokenURI, msg.sender,_tokenIdCounter);
         fanTradeToken.createToken(params.fanTradeTokenName, params.fanTradeTokenSymbol, params.tradeTokenURI, msg.sender, _tokenIdCounter);
@@ -204,6 +207,13 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
                 hex"5af43d82803e903d91602b57fd5bf3",
                 abi.encode(salt_)
             );
+    }
+    
+    function _mintTokens(uint256 _lensProfileId, uint256 _totalMintAmount,address _subscriber) internal {
+        require(accounts[_lensProfileId].exists,"Invalid lens profile id");
+        fanMintToken.mintToken(accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
+
+        emit MintedFanToken(_lensProfileId,accounts[_lensProfileId].tokenId, _totalMintAmount, _subscriber);
     }
 
     // Chainlink CCIP functions
@@ -263,6 +273,8 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
         return messageId;
     }
 
+
+
     /// handle a received message
     function _ccipReceive(
         Client.Any2EVMMessage memory any2EvmMessage
@@ -276,8 +288,8 @@ contract GHOFundMeFollowModule is  FollowValidatorFollowModuleBase, CCIPReceiver
     {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
-       
-
+        (uint256 _lensProfileId,uint256 _totalMintAmount,address _subscriber)=abi.decode(any2EvmMessage.data,(uint256,uint256,address));
+        _mintTokens(_lensProfileId, _totalMintAmount, _subscriber);
         emit MessageReceived(
             any2EvmMessage.messageId,
             any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
