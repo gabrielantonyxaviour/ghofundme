@@ -293,7 +293,9 @@ contract GHOFundMeVaultFactory is CCIPReceiver{
     {
         s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
         s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent data
-        address _deployedVault=_deployVault(abi.decode(any2EvmMessage.data, (CrosschainMessage)),abi.decode(any2EvmMessage.sender, (address)),any2EvmMessage.sourceChainSelector);
+        CrosschainMessage memory _crosschainMessage=abi.decode(any2EvmMessage.data, (CrosschainMessage));
+        address _moduleAddress=abi.decode(any2EvmMessage.sender, (address));
+        address _deployedVault=_deployVault(_crosschainMessage,_moduleAddress,any2EvmMessage.sourceChainSelector);
         emit VaultDeployed(_deployedVault);
         emit MessageReceived(
             any2EvmMessage.messageId,
